@@ -1,0 +1,2 @@
+def HouseRobary(array):
+    
