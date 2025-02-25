@@ -1,0 +1,21 @@
+ol li:hover {
+    background-color: red;
+    color: white;
+    list-style: georgian;
+}
+ul > li{
+    background-color: yellow;
+}
+/* Sibling Selector
+Means uss element ke baad sibling elements lo style impliment */
+
+.container ~ div{
+    background-color: orange;
+
+
+}
+/* Atribute Selector */
+
+div[class="box"]{
+    background-color: blue;
+}

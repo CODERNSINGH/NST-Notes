@@ -1,0 +1,1 @@
+# Lecture one is Nothing just intro to Subject and cariculam
