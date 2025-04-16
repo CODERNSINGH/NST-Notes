@@ -1,13 +1,12 @@
-import React from 'react'
-import Navbar from './components/Navbar'
+import React, { useState } from 'react'
 
-function App() {
+export default function App() {
+  const[search,setSearch] = useState("")
+
   return (
     <div>
-      {Navbar()}
-      <h1>Hello i am Narendra Singh Build</h1>
+      
+      <input onChange={handleChange} type="text" placeholder='Search User' />
     </div>
   )
 }
-
-export default App
