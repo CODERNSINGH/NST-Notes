@@ -1,0 +1,22 @@
+.body{
+    width: 100vw;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: black;
+    color: wheat;
+    flex-direction: column;
+    height: 100vh;
+}
+
+.container{
+    display: flex;
+    justify-content: space-between;
+}
+.app{
+    width: 60vw;
+    border: 2px solid white;
+
+
+}
