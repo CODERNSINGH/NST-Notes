@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <h1 id="timer"></h1>
+</body>
+    <script>
+        var time = 0
+        
+    
+       setInterval(() => {
+        time += 1
+       }, 1000);
+
+        document.getElementById('timer').innerHTML = time
+    </script>
+</html>
