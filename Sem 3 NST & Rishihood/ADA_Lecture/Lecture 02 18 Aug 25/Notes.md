@@ -4,6 +4,56 @@ Time complexity helps us analyze **how efficient an algorithm is** as input size
 We measure **growth rate** (not real seconds) using asymptotic notations.
 
 ---
+## Important 
+✅ What Big-O, Ω (Omega), and Θ (Theta) really mean
+
+Big-O (O)
+👉 Means upper bound (the function doesn’t grow faster than this).
+People often use it for worst-case, but technically it’s not always about “worst-case” — it’s just a mathematical upper bound.
+
+Example:
+
+Binary Search: Worst case = O(log n).
+
+QuickSort: Worst case = O(n²), Average = O(n log n).
+In both cases, O describes growth, not necessarily “worst case only”.
+
+Big-Ω (Omega)
+👉 Means lower bound (the function doesn’t grow slower than this).
+This is not exact runtime — it just tells you the algorithm will take at least this much time.
+Example: Bubble Sort is Ω(n) (because even in best case, you must look at all n elements once).
+
+Big-Θ (Theta)
+👉 Means tight bound: both upper and lower bounds are the same (within constant factors).
+So it captures the true asymptotic growth rate.
+Example: Merge Sort is Θ(n log n) (because both best and worst cases are asymptotically n log n).
+
+🚫 Misconception (what many beginners say)
+
+❌ “O(n) = worst case”
+
+❌ “Ω(n) = exact time”
+
+❌ “Θ(n) = average case”
+
+✅ Correct view
+
+O(n) → Upper bound (often used for worst case, but not equal to it).
+
+Ω(n) → Lower bound (often used for best case, but not equal to it).
+
+Θ(n) → Tight bound (describes the true asymptotic behavior).
+
+Average case → Needs separate analysis, then we can still describe it with O, Ω, or Θ.
+
+Example: QuickSort
+
+Best case: Ω(n log n)
+
+Average case: Θ(n log n)
+
+Worst case: O(n²)
+---
 
 ## 🔹 Level 1 – The Basics
 
