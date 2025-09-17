@@ -1,0 +1,1944 @@
+Last login: Tue Aug 26 08:57:01 on console
+(base) Narendra@Narendra-Singh-Macbook ~ % mysqul -u root -p
+zsh: command not found: mysqul
+(base) Narendra@Narendra-Singh-Macbook ~ % mysql -u root -p 
+Enter password: 
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 9
+Server version: 9.4.0 MySQL Community Server - GPL
+
+Copyright (c) 2000, 2024, Oracle and/or its affiliates.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql> create database NST_Mart
+    -> ;
+Query OK, 1 row affected (0.00 sec)
+
+mysql> use NST_Mart
+Database changed
+mysql> '''
+    '> class Node:
+    '>     def __init__(self, data):
+    '>         self.data = data
+    '>         self.left = None
+    '>         self.right = None
+    '> '''
+    -> 
+    -> class Solution:
+    ->     #Function to check whether a Binary Tree is BST or not.
+    ->     def isBST(self, root):
+    ->         last = float('-inf')
+    ->         def helper(root,last):
+    -> 
+    ->             if not root:
+    ->                 return 
+    ->             
+    ->             helper(root.left,last)
+    ->             
+    ->             if not root.data > last:
+    ->                 return False
+    ->             else:
+    ->                 last = root.data
+    ->         
+    ->             helper(root.right,last)
+    -> 
+    -> 
+    ->         return helper(root,last)
+    ->             
+    ->     
+    -> ^C
+mysql> ^C
+mysql> '''
+    '> class Node:
+    '>     def __init__(self, data):
+    '>         self.data = data
+    '>         self.left = None
+    '>         self.right = None
+    '> '''
+    -> 
+    -> class Solution:
+    ->     #Function to check whether a Binary Tree is BST or not.
+    ->     def isBST(self, root):
+    ->         last = float('-inf')
+    ->         def helper(root,last):
+    -> 
+    ->             if not root:
+    ->                 return 
+    ->             
+    ->             helper(root.left,last)
+    ->             
+    ->             if not root.data > last:
+    ->                 return False
+    ->             else:
+    ->                 last = root.data
+    ->         
+    ->             helper(root.right,last)
+    -> 
+    -> 
+    ->         return helper(root,last)
+    ->             
+    ->     ^C
+mysql> CREATE TABLE customers (
+    ->     customer_id INT PRIMARY KEY,
+    ->     name VARCHAR(50),
+    ->     phn_no int,
+    ->     city VARCHAR(50),
+    ->     state VARCHAR(50)
+    -> );
+Query OK, 0 rows affected (0.01 sec)
+
+mysql> 
+mysql> CREATE TABLE orders (
+    ->     order_id INT PRIMARY KEY,
+    ->     customer_id INT,
+    ->     order_date DATE,
+    ->     total_order_amount DECIMAL(10, 2),
+    ->     status VARCHAR(20),
+    ->     FOREIGN KEY (customer_id) REFERENCES customers(customer_id)
+    -> );
+Query OK, 0 rows affected (0.01 sec)
+
+mysql> CREATE TABLE categories (
+    ->     category_id INT PRIMARY KEY,
+    ->     name VARCHAR(50),
+    ->     description TEXT
+    -> );
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> 
+mysql> CREATE TABLE products (
+    ->     product_id INT PRIMARY KEY,
+    ->     name VARCHAR(100),
+    ->     description TEXT,
+    ->     price DECIMAL(10, 2),
+    ->     stock INT,
+    ->     category_id INT,
+    ->     FOREIGN KEY (category_id) REFERENCES categories(category_id)
+    -> );
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> CREATE TABLE order_items (
+    ->     order_item_id INT PRIMARY KEY,
+    ->     order_id INT,
+    ->     product_id INT,
+    ->     quantity INT,
+    ->     total_amount DECIMAL(10, 2),
+    ->     FOREIGN KEY (order_id) REFERENCES orders(order_id),
+    ->     FOREIGN KEY (product_id) REFERENCES products(product_id)
+    -> );
+Query OK, 0 rows affected (0.01 sec)
+
+mysql> CREATE TABLE payments (
+    ->     payment_id INT PRIMARY KEY,
+    ->     order_id INT,
+    ->     payment_date DATE,
+    ->     payment_method VARCHAR(20),
+    ->     payment_status VARCHAR(20),
+    ->     FOREIGN KEY (order_id) REFERENCES orders(order_id)
+    -> );
+Query OK, 0 rows affected (0.01 sec)
+
+mysql> CREATE TABLE shipping (
+    ->     shipping_id INT PRIMARY KEY,
+    ->     order_id INT,
+    ->     shipping_date DATE,
+    ->     shipping_method VARCHAR(20),
+    ->     shipping_status VARCHAR(20),
+    ->     FOREIGN KEY (order_id) REFERENCES orders(order_id)
+    -> );
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> 
+mysql> CREATE TABLE Customer_complaints (
+    ->     Complaint_id INT AUTO_INCREMENT PRIMARY KEY,
+    ->     Customer_name VARCHAR(100),
+    ->     Severity INT,
+    ->     complaint_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    -> );
+Query OK, 0 rows affected (0.01 sec)
+
+mysql> 
+mysql> 
+mysql> 
+mysql> 
+mysql> INSERT INTO customers (customer_id, name, phn_no, city, state) VALUES
+    -> (1, 'Rahul', 210, 'Mumbai', 'Maharashtra'),
+    -> (2, 'Mira', 211, 'Delhi', 'Delhi'),
+    -> (3, 'Rajat', 212, 'Bengaluru', 'Karnataka'),
+    -> (4, 'Amit', 213, 'Chennai', 'Tamil Nadu'),
+    -> (5, 'Mohit', 214, 'Hyderabad', 'Telangana'),
+    -> (6, 'Priya', 215, 'Pune', 'Maharashtra'),
+    -> (7, 'Anmol', 216, 'Kolkata', 'West Bengal'),
+    -> (8, 'Samir', 217, 'Lucknow', 'Uttar Pradesh'),
+    -> (9, 'Sanya', 218, 'Ahmedabad', 'Gujarat'),
+    -> (10, 'Nisha', 219, 'Jaipur', 'Rajasthan'),
+    -> (11, 'Rajesh', 220, 'Mumbai', 'Maharashtra'),
+    -> (12, 'Seema', 221, 'Delhi', 'Delhi'),
+    -> (13, 'Vikas', 222, 'Bengaluru', 'Karnataka'),
+    -> (14, 'Anjali', 223, 'Chennai', 'Tamil Nadu'),
+    -> (15, 'Aakash', 224, 'Hyderabad', 'Telangana'),
+    -> (16, 'Priya', 225, 'Pune', 'Maharashtra'),
+    -> (17, 'Aman', 226, 'Kolkata', 'West Bengal'),
+    -> (18, 'Sonam', 227, 'Lucknow', 'Uttar Pradesh'),
+    -> (19, 'Niharika', 228, 'Ahmedabad', 'Gujarat'),
+    -> (20, 'Neeraj', 229, 'Jaipur', 'Rajasthan'),
+    -> (21, 'Harsh', 230, 'Mumbai', 'Maharashtra'),
+    -> (22, 'Neha', 231, 'Delhi', 'Delhi'),
+    -> (23, 'Rohit', 232, 'Bengaluru', 'Karnataka'),
+    -> (24, 'Amit', 233, 'Chennai', 'Tamil Nadu'),
+    -> (25, 'Shivani', 234, 'Hyderabad', 'Telangana'),
+    -> (26, 'Aarav', 235, 'Pune', 'Maharashtra'),
+    -> (27, 'Nidhi', 236, 'Kolkata', 'West Bengal'),
+    -> (28, 'Varun', 237, 'Lucknow', 'Uttar Pradesh'),
+    -> (29, 'Aditi', 238, 'Ahmedabad', 'Gujarat'),
+    -> (30, 'Tanu', 239, 'Jaipur', 'Rajasthan'),
+    -> (31, 'Krishna', 240, 'Mumbai', 'Maharashtra'),
+    -> (32, 'Kriti', 241, 'Delhi', 'Delhi'),
+    -> (33, 'Rishabh', 242, 'Bengaluru', 'Karnataka'),
+    -> (34, 'Pooja', 243, 'Chennai', 'Tamil Nadu'),
+    -> (35, 'Rahul', 244, 'Hyderabad', 'Telangana'),
+    -> (36, 'Divya', 245, 'Pune', 'Maharashtra'),
+    -> (37, 'Sandeep', 246, 'Kolkata', 'West Bengal'),
+    -> (38, 'Neeraj', 247, 'Lucknow', 'Uttar Pradesh'),
+    -> (39, 'Kriti', 248, 'Ahmedabad', 'Gujarat'),
+    -> (40, 'Madhuri', 249, 'Jaipur', 'Rajasthan'),
+    -> (41, 'Suresh', 250, 'Mumbai', 'Maharashtra'),
+    -> (42, 'Kavya', 251, 'Delhi', 'Delhi'),
+    -> (43, 'Rohit', 252, 'Bengaluru', 'Karnataka'),
+    -> (44, 'Komal', 253, 'Chennai', 'Tamil Nadu'),
+    -> (45, 'Vishal', 254, 'Hyderabad', 'Telangana'),
+    -> (46, 'Sakshi', 255, 'Pune', 'Maharashtra'),
+    -> (47, 'Siddhi', 256, 'Kolkata', 'West Bengal'),
+    -> (48, 'Vineet', 257, 'Lucknow', 'Uttar Pradesh'),
+    -> (49, 'Ashwini', 258, 'Ahmedabad', 'Gujarat'),
+    -> (50, 'Aman', 259, 'Jaipur', 'Rajasthan'),
+    -> (51, 'Ravi', 260, 'Mumbai', 'Maharashtra'),
+    -> (52, 'Priyanka', 261, 'Delhi', 'Delhi'),
+    -> (53, 'Shubham', 262, 'Bengaluru', 'Karnataka'),
+    -> (54, 'Tanvi', 263, 'Chennai', 'Tamil Nadu'),
+    -> (55, 'Ishita', 264, 'Hyderabad', 'Telangana'),
+    -> (56, 'Arvind', 265, 'Pune', 'Maharashtra'),
+    -> (57, 'Neelam', 266, 'Kolkata', 'West Bengal'),
+    -> (58, 'Radhika', 267, 'Lucknow', 'Uttar Pradesh'),
+    -> (59, 'Poonam', 268, 'Ahmedabad', 'Gujarat'),
+    -> (60, 'Amit', 269, 'Jaipur', 'Rajasthan'),
+    -> (61, 'Devendra', 270, 'Mumbai', 'Maharashtra'),
+    -> (62, 'Ankita', 271, 'Delhi', 'Delhi'),
+    -> (63, 'Manish', 272, 'Bengaluru', 'Karnataka'),
+    -> (64, 'Sonal', 273, 'Chennai', 'Tamil Nadu'),
+    -> (65, 'Ravi', 274, 'Hyderabad', 'Telangana'),
+    -> (66, 'Laxmi', 275, 'Pune', 'Maharashtra'),
+    -> (67, 'Pankaj', 276, 'Kolkata', 'West Bengal'),
+    -> (68, 'Suman', 277, 'Lucknow', 'Uttar Pradesh'),
+    -> (69, 'Swati', 278, 'Ahmedabad', 'Gujarat'),
+    -> (70, 'Rinku', 279, 'Jaipur', 'Rajasthan'),
+    -> (71, 'Vinay', 280, 'Mumbai', 'Maharashtra'),
+    -> (72, 'Shivendra', 281, 'Delhi', 'Delhi'),
+    -> (73, 'Rani', 282, 'Bengaluru', 'Karnataka'),
+    -> (74, 'Tushar', 283, 'Chennai', 'Tamil Nadu'),
+    -> (75, 'Neetu', 284, 'Hyderabad', 'Telangana'),
+    -> (76, 'Suman', 285, 'Pune', 'Maharashtra'),
+    -> (77, 'Shruti', 286, 'Kolkata', 'West Bengal'),
+    -> (78, 'Saurabh', 287, 'Lucknow', 'Uttar Pradesh'),
+    -> (79, 'Rekha', 288, 'Ahmedabad', 'Gujarat'),
+    -> (80, 'Divya', 289, 'Jaipur', 'Rajasthan'),
+    -> (81, 'Sumit', 290, 'Mumbai', 'Maharashtra'),
+    -> (82, 'Harshita', 291, 'Delhi', 'Delhi'),
+    -> (83, 'Rachna', 292, 'Bengaluru', 'Karnataka'),
+    -> (84, 'Pranav', 293, 'Chennai', 'Tamil Nadu'),
+    -> (85, 'Krishna', 294, 'Hyderabad', 'Telangana'),
+    -> (86, 'Suman', 295, 'Pune', 'Maharashtra'),
+    -> (87, 'Manish', 296, 'Kolkata', 'West Bengal'),
+    -> (88, 'Sumit', 297, 'Lucknow', 'Uttar Pradesh'),
+    -> (89, 'Siddharth', 298, 'Ahmedabad', 'Gujarat'),
+    -> (90, 'Raghav', 299, 'Jaipur', 'Rajasthan'),
+    -> (91, 'Vikash', 300, 'Mumbai', 'Maharashtra'),
+    -> (92, 'Ashu', 301, 'Delhi', 'Delhi'),
+    -> (93, 'Nirmal', 302, 'Bengaluru', 'Karnataka'),
+    -> (94, 'Basant', 303, 'Chennai', 'Tamil Nadu'),
+    -> (95, 'Rohini', 304, 'Hyderabad', 'Telangana'),
+    -> (96, 'Madhur', 305, 'Pune', 'Maharashtra'),
+    -> (97, 'Ishwar', 306, 'Kolkata', 'West Bengal'),
+    -> (98, 'Nikita', 307, 'Lucknow', 'Uttar Pradesh'),
+    -> (99, 'Pradeep', 308, 'Ahmedabad', 'Gujarat'),
+    -> (100, 'Zoya', 310, 'Bhopal', 'Madhya Pradesh');
+Query OK, 100 rows affected (0.01 sec)
+Records: 100  Duplicates: 0  Warnings: 0
+
+mysql> 
+mysql> -- Insert data into categories table
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> INSERT INTO categories (category_id, name, description) VALUES
+    -> (1, 'Electronics', 'Devices and gadgets'),
+    -> (2, 'Books', 'Books and literature'),
+    -> (3, 'Fashion', 'Clothing and accessories'),
+    -> (4, 'Home & Kitchen', 'Home appliances and kitchenware'),
+    -> (5, 'Sports', 'Sports equipment and accessories');
+Query OK, 5 rows affected (0.00 sec)
+Records: 5  Duplicates: 0  Warnings: 0
+
+mysql> 
+mysql> -- Insert data into products table
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> INSERT INTO products (product_id, name, description, price, stock,category_id) VALUES
+    -> (101, 'Smartphone', 'Android smartphone', 15000.00, 1,1),
+    -> (102, 'Laptop', 'High-performance laptop', 45000.00, 4, 1),
+    -> (103, 'Fiction Novel', Null, 500.00, 1, 2),
+    -> (104, 'T-Shirt', 'Cotton t-shirt', 300.00,5,3),
+    -> (105, 'Mixer Grinder', 'High-power mixer grinder', 2500.00, 80,4),
+    -> (106, 'Football',Null, 1000.00, 100,5),
+    -> (107, 'Smart Watch', 'Fitness tracking smartwatch', 5000.00, 50, 1),
+    -> (108, 'Headphones', 'Wireless headphones with noise cancellation', 3500.00, 30, 1),
+    -> (109, 'Tablet', '10-inch Android tablet', 12000.00, 20, 1),
+    -> (110, 'Bluetooth Speaker', 'Portable Bluetooth speaker', 1500.00, 60, 1), 
+    -> (111, 'Camera', 'Digital camera with 4K video recording', 25000.00, 15, 1),
+    -> (112, 'Smartphone Case', 'Protective case for smartphones', 300.00, 100, 1),
+    -> (113, 'Laptop Bag', 'Waterproof laptop bag', 1200.00, 50, 1),
+    -> (114, 'E-Reader', 'Kindle e-reader', 8000.00, 40, 2),
+    -> (115, 'Cooking Recipe Book', 'Collection of world cuisines', 400.00, 200, 2),
+    -> (116, 'Self-Help Book', 'Motivational book on personal growth', 350.00, 150, 2),
+    -> (117, 'Fashion Magazine', 'Monthly fashion trends magazine', 150.00, 300, 2),
+    -> (118, 'Sci-Fi Novel', 'Science fiction novel', 250.00, 120, 2),
+    -> (119, 'Leather Jacket', 'Genuine leather jacket', 3500.00, 30, 3),
+    -> (120, 'Running Shoes', 'Comfortable running shoes', 2000.00, 70, 3),
+    -> (121, 'Jeans', 'Denim jeans for casual wear', 1200.00, 80, 3),
+    -> (122, 'Sneakers', 'Fashionable sneakers for casual wear', 1800.00, 50, 3),
+    -> (123, 'T-Shirt Pack', 'Pack of 3 cotton t-shirts', 800.00, 100, 3),
+    -> (124, 'Blender', Null, 3500.00, 40, 4),
+    -> (125, 'Microwave Oven', 'Compact microwave oven', 5500.00, 25, 4),
+    -> (126, 'Refrigerator', 'Double-door refrigerator', 22000.00, 10, 4),
+    -> (127, 'Dishwasher', 'Automatic dishwasher', 15000.00, 15, 4),
+    -> (128, 'Air Fryer', 'Low-oil air fryer for healthy cooking', 8000.00, 30, 4),
+    -> (129, 'Football Shoes', Null, 2500.00, 60, 5),
+    -> (130, 'Tennis Racket', 'Professional tennis racket', 3500.00, 40, 5),
+    -> (131, 'Cricket Bat', 'Wooden cricket bat', 1500.00, 100, 5),
+    -> (132, 'Basketball', Null, 1200.00, 80, 5),
+    -> (133, 'Dumbbells', 'Pair of adjustable dumbbells', 2500.00, 50, 5),
+    -> (134, 'Smartphone', '5G-enabled smartphone with 128GB storage', 25000.00, 25, 1),
+    -> (135, 'Laptop', 'Gaming laptop with RTX graphics', 75000.00, 10, 1),
+    -> (136, 'Smart Watch', 'Waterproof smartwatch with heart rate monitor', 4000.00, 30, 1),
+    -> (137, 'Washing Machine', 'Fully automatic washing machine', 12000.00, 20, 4),
+    -> (138, 'Iron', 'Steam iron with ceramic soleplate', 1500.00, 70, 4),
+    -> (139, 'Hand Mixer', 'Electric hand mixer for baking', 1000.00, 50, 4),
+    -> (140, 'Shoes', 'Leather formal shoes', 2500.00, 60, 3),
+    -> (141, 'Handbag', 'Stylish leather handbag', 3000.00, 30, 3),
+    -> (142, 'Jacket', 'Winter jacket with insulation', 4000.00, 40, 3),
+    -> (143, 'T-shirt', 'Printed graphic t-shirt', 500.00, 100, 3),
+    -> (144, 'Watch', 'Analog wristwatch', 1500.00, 50, 3),
+    -> (145, 'Bookshelf', 'Wooden bookshelf for home office', 3500.00, 20, 4),
+    -> (146, 'Coffee Table', 'Stylish coffee table for living room', 2500.00, 25, 4),
+    -> (147, 'Ceiling Fan', 'Energy-efficient ceiling fan', 1500.00, 35, 4),
+    -> (148, 'Pressure Cooker', 'Stainless steel pressure cooker', 1200.00, 50, 4),
+    -> (149, 'Vacuum Cleaner', 'Cordless vacuum cleaner for home use', 5000.00, 20, 4),
+    -> (150, 'Dumbbell Set', 'Adjustable dumbbell set with rack', 4500.00, 15, 5),
+    -> (151, 'Skipping Rope', 'Jump rope for cardio exercise', 200.00, 100, 5),
+    -> (152, 'Yoga Mat', 'Non-slip yoga mat for practice', 800.00, 70, 5),
+    -> (153, 'Soccer Ball', 'Official size soccer ball', 1200.00, 80, 5),
+    -> (154, 'Gym Gloves', 'Weightlifting gym gloves', 500.00, 60, 5),
+    -> (155, 'Camping Tent', '4-person camping tent', 7000.00, 15, 5),
+    -> (156, 'Smartphone Stand', 'Adjustable smartphone stand', 350.00, 90, 1),
+    -> (157, 'Portable Charger', 'Power bank with 20000mAh capacity', 1800.00, 50, 1),
+    -> (158, 'Bluetooth Earphones', 'Wireless Bluetooth earphones with mic', 1200.00, 70, 1),
+    -> (159, '4K TV', 'Smart 4K television with HDR', 45000.00, 10, 1),
+    -> (160, 'Electric Kettle', 'Cordless electric kettle', 1200.00, 50, 4),
+    -> (161, 'Bread Maker', 'Automatic bread maker for home use', 5000.00, 20, 4),
+    -> (162, 'Food Processor', 'Multi-functional food processor', 7000.00, 25, 4),
+    -> (163, 'Hair Dryer', 'Professional hair dryer with multiple heat settings', 1500.00, 50, 4),
+    -> (164, 'Tennis Racket', 'Lightweight tennis racket for beginners', 3000.00, 50, 5),
+    -> (165, 'Baseball Bat', 'Aluminum baseball bat', 2200.00, 30, 5),
+    -> (166, 'Badminton Racket', 'Carbon fiber badminton racket', 1500.00, 70, 5),
+    -> (167, 'Resistance Bands', 'Set of resistance bands for exercise', 800.00, 50, 5),
+    -> (168, 'Table Tennis Bat', 'Professional table tennis bat', 1500.00, 100, 5),
+    -> (169, 'Gym Bench', 'Adjustable gym bench for workouts', 4500.00, 20, 5),
+    -> (170, 'Mobile Case', 'Shockproof mobile case for iPhone', 300.00, 120, 1),
+    -> (171, 'Smartphone Screen Protector', 'Tempered glass screen protector', 200.00, 150, 1),
+    -> (172, 'Camera Lens', 'Camera lens for professional photography', 25000.00, 5, 1),
+    -> (173, 'VR Headset', 'Virtual reality headset for gaming', 15000.00, 10, 1),
+    -> (174, 'Laptop Stand', 'Ergonomic laptop stand for desk', 800.00, 100, 1), 
+    -> (175, 'Smartphone Charger', 'Quick-charge USB-C smartphone charger', 600.00, 150, 1),
+    -> (176, 'Portable Power Bank', 'Power bank with 10000mAh capacity', 1200.00, 90, 1),
+    -> (177, 'Smartphone Grip', 'Phone grip for better handling', 150.00, 200, 1),
+    -> (178, 'Laptop Sleeve', 'Padded laptop sleeve for protection', 700.00, 80, 1),
+    -> (179, 'Smartphone Selfie Stick', 'Selfie stick for mobile phones', 400.00, 150, 1),
+    -> (180, 'Over-Ear Headphones', 'Noise-canceling over-ear headphones', 5000.00, 30, 1),
+    -> (181, 'E-Book Reader', 'E-Book reader with 8GB storage', 8000.00, 40, 2), 
+    -> (182, 'Cookbook', 'Healthy cooking cookbook', 350.00, 250, 2),
+    -> (183, 'Biographies', 'Biography of famous personalities', 400.00, 150, 2),
+    -> (184, 'Novel', 'Romantic novel by a famous author', 250.00, 300, 2),
+    -> (185, 'History Book', 'Book about ancient history', 500.00, 200, 2),
+    -> (186, 'Sunglasses', 'Polarized sunglasses for summer', 1500.00, 70, 3),
+    -> (187, 'Winter Jacket', 'Warm jacket for winter season', 4000.00, 40, 3),
+    -> (188, 'Raincoat', 'Waterproof raincoat for rainy season', 1200.00, 50, 3),
+    -> (189, 'Sneakers', 'Comfortable sneakers for casual wear', 1800.00, 100, 3),
+    -> (190, 'Jacket', 'Leather jacket for cold weather', 3500.00, 20, 3),
+    -> (191, 'Bedding Set', 'King-sized bedding set for bedroom', 3000.00, 30, 4),
+    -> (192, 'Pillow', 'Soft memory foam pillow', 1500.00, 100, 4),
+    -> (193, 'Curtains', 'Window curtains with floral designs', 1200.00, 150, 4),
+    -> (194, 'Air Conditioner', 'Energy-efficient air conditioner', 35000.00, 10, 4),
+    -> (195, 'Recliner Chair', 'Comfortable recliner for living room', 8000.00, 15, 4),
+    -> (196, 'Yoga Mat', 'Eco-friendly yoga mat for exercise', 800.00, 120, 5),
+    -> (197, 'Resistance Bands', 'Resistance bands for home workouts', 600.00, 150, 5),
+    -> (198, 'Basketball Shoes', 'Specialized shoes for basketball players', 2500.00, 60, 5),
+    -> (199, 'Tennis Shoes', 'Durable tennis shoes for matches', 2200.00, 50, 5),
+    -> (200, 'Football Kit', 'Complete football kit for players', 4000.00, 40, 5);
+Query OK, 100 rows affected (0.01 sec)
+Records: 100  Duplicates: 0  Warnings: 0
+
+mysql> 
+mysql> 
+mysql> 
+mysql> -- Insert data into orders table
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> INSERT INTO orders (order_id, customer_id, order_date, total_order_amount, status) VALUES
+    -> (901, 1, '2024-08-01', 15300.00, 'Shipped'),
+    -> (902, 2, '2024-08-02', 45500.00, 'Delivered'),
+    -> (903, 3, '2024-08-03', 530.00, 'Processing'),
+    -> (904, 4, '2024-08-04', 3050.00, 'Shipped'),
+    -> (905, 5, '2024-08-05', 25700.00, 'Delivered'),
+    -> (906, 6, '2024-08-06', 1010.00, 'Processing'),
+    -> (907, 7, '2024-08-07', 5100.00, 'Shipped');
+Query OK, 7 rows affected (0.00 sec)
+Records: 7  Duplicates: 0  Warnings: 0
+
+mysql> 
+mysql> -- Insert data into order_items table
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> INSERT INTO order_items (order_item_id, order_id, product_id, quantity, total_amount) VALUES
+    -> (1, 901, 101, 1, 15000.00),
+    -> (2, 902, 102, 1, 45000.00),
+    -> (3, 903, 103, 1, 500.00),
+    -> (4, 903, 104, 1, 300.00),
+    -> (5, 904, 105, 1, 2500.00),
+    -> (6, 905, 106, 1, 1000.00);
+Query OK, 6 rows affected (0.00 sec)
+Records: 6  Duplicates: 0  Warnings: 0
+
+mysql> 
+mysql> -- Insert data into payments table
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> INSERT INTO payments (payment_id, order_id, payment_date, payment_method, payment_status) VALUES
+    -> (1, 901, '2024-08-01', 'Credit Card', 'Paid'),
+    -> (2, 902, '2024-08-02', 'Debit Card', 'Paid'),
+    -> (3, 903, '2024-08-03', 'UPI', 'Pending'),
+    -> (4, 904, '2024-08-04', 'Net Banking', 'Paid'),
+    -> (5, 905, '2024-08-05', 'Credit Card', 'Paid'),
+    -> (6, 906, '2024-08-06', 'Debit Card', 'Pending'),
+    -> (7, 907, '2024-08-07', 'UPI', 'Paid');
+Query OK, 7 rows affected (0.01 sec)
+Records: 7  Duplicates: 0  Warnings: 0
+
+mysql> 
+mysql> -- Insert data into shipping table
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> INSERT INTO shipping (shipping_id, order_id, shipping_date, shipping_method, shipping_status) VALUES
+    -> (1, 901, '2024-08-02', 'Courier', 'Delivered'),
+    -> (2, 902, '2024-08-03', 'Courier', 'Delivered'),
+    -> (3, 903, '2024-08-04', 'Courier', 'In Transit'),
+    -> (4, 904, '2024-08-05', 'Courier', 'Delivered'),
+    -> (5, 905, '2024-08-06', 'Courier', 'Delivered'),
+    -> (6, 906, '2024-08-07', 'Courier', 'In Transit'),
+    -> (7, 907, '2024-08-08', 'Courier', 'Delivered');
+Query OK, 7 rows affected (0.00 sec)
+Records: 7  Duplicates: 0  Warnings: 0
+
+mysql> 
+mysql> INSERT INTO Customer_complaints (Customer_name, Severity, complaint_date) VALUES
+    -> ('Rahul', 1, '2024-08-01'),
+    -> ('Mira', 3, '2024-08-02'),
+    -> ('Rahul', 2, '2024-08-03'),
+    -> ('Anjali', 1, '2024-08-04'),
+    -> ('Aarav', 1, '2024-08-05'),
+    -> ('Sonam', 3, '2024-08-06'),
+    -> ('Shivani', 3, '2024-08-07'),
+    -> ('Priya', 2, '2024-08-08'),
+    -> ('Amit', 1, '2024-08-09'),
+    -> ('Tushar', 2, '2024-08-10');
+Query OK, 10 rows affected (0.01 sec)
+Records: 10  Duplicates: 0  Warnings: 0
+
+mysql> 
+mysql> 
+mysql> INSERT INTO Customer_complaints
+    ->  (Complaint_id, Customer_Name, Severity) VALUES
+    ->  (11, 'mira', 3),
+    ->  (12, 'Mira Raj', 3),
+    ->  (13, 'Rajat Rai', 2),
+    ->  (14, 'Umesh Sharma', 3);
+Query OK, 4 rows affected (0.00 sec)
+Records: 4  Duplicates: 0  Warnings: 0
+
+mysql> 
+mysql> show tables
+    -> ;
++---------------------+
+| Tables_in_nst_mart  |
++---------------------+
+| categories          |
+| Customer_complaints |
+| customers           |
+| order_items         |
+| orders              |
+| payments            |
+| products            |
+| shipping            |
++---------------------+
+8 rows in set (0.00 sec)
+
+mysql> show * from customers;
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '* from customers' at line 1
+mysql> select * from customers;
++-------------+-----------+--------+-----------+----------------+
+| customer_id | name      | phn_no | city      | state          |
++-------------+-----------+--------+-----------+----------------+
+|           1 | Rahul     |    210 | Mumbai    | Maharashtra    |
+|           2 | Mira      |    211 | Delhi     | Delhi          |
+|           3 | Rajat     |    212 | Bengaluru | Karnataka      |
+|           4 | Amit      |    213 | Chennai   | Tamil Nadu     |
+|           5 | Mohit     |    214 | Hyderabad | Telangana      |
+|           6 | Priya     |    215 | Pune      | Maharashtra    |
+|           7 | Anmol     |    216 | Kolkata   | West Bengal    |
+|           8 | Samir     |    217 | Lucknow   | Uttar Pradesh  |
+|           9 | Sanya     |    218 | Ahmedabad | Gujarat        |
+|          10 | Nisha     |    219 | Jaipur    | Rajasthan      |
+|          11 | Rajesh    |    220 | Mumbai    | Maharashtra    |
+|          12 | Seema     |    221 | Delhi     | Delhi          |
+|          13 | Vikas     |    222 | Bengaluru | Karnataka      |
+|          14 | Anjali    |    223 | Chennai   | Tamil Nadu     |
+|          15 | Aakash    |    224 | Hyderabad | Telangana      |
+|          16 | Priya     |    225 | Pune      | Maharashtra    |
+|          17 | Aman      |    226 | Kolkata   | West Bengal    |
+|          18 | Sonam     |    227 | Lucknow   | Uttar Pradesh  |
+|          19 | Niharika  |    228 | Ahmedabad | Gujarat        |
+|          20 | Neeraj    |    229 | Jaipur    | Rajasthan      |
+|          21 | Harsh     |    230 | Mumbai    | Maharashtra    |
+|          22 | Neha      |    231 | Delhi     | Delhi          |
+|          23 | Rohit     |    232 | Bengaluru | Karnataka      |
+|          24 | Amit      |    233 | Chennai   | Tamil Nadu     |
+|          25 | Shivani   |    234 | Hyderabad | Telangana      |
+|          26 | Aarav     |    235 | Pune      | Maharashtra    |
+|          27 | Nidhi     |    236 | Kolkata   | West Bengal    |
+|          28 | Varun     |    237 | Lucknow   | Uttar Pradesh  |
+|          29 | Aditi     |    238 | Ahmedabad | Gujarat        |
+|          30 | Tanu      |    239 | Jaipur    | Rajasthan      |
+|          31 | Krishna   |    240 | Mumbai    | Maharashtra    |
+|          32 | Kriti     |    241 | Delhi     | Delhi          |
+|          33 | Rishabh   |    242 | Bengaluru | Karnataka      |
+|          34 | Pooja     |    243 | Chennai   | Tamil Nadu     |
+|          35 | Rahul     |    244 | Hyderabad | Telangana      |
+|          36 | Divya     |    245 | Pune      | Maharashtra    |
+|          37 | Sandeep   |    246 | Kolkata   | West Bengal    |
+|          38 | Neeraj    |    247 | Lucknow   | Uttar Pradesh  |
+|          39 | Kriti     |    248 | Ahmedabad | Gujarat        |
+|          40 | Madhuri   |    249 | Jaipur    | Rajasthan      |
+|          41 | Suresh    |    250 | Mumbai    | Maharashtra    |
+|          42 | Kavya     |    251 | Delhi     | Delhi          |
+|          43 | Rohit     |    252 | Bengaluru | Karnataka      |
+|          44 | Komal     |    253 | Chennai   | Tamil Nadu     |
+|          45 | Vishal    |    254 | Hyderabad | Telangana      |
+|          46 | Sakshi    |    255 | Pune      | Maharashtra    |
+|          47 | Siddhi    |    256 | Kolkata   | West Bengal    |
+|          48 | Vineet    |    257 | Lucknow   | Uttar Pradesh  |
+|          49 | Ashwini   |    258 | Ahmedabad | Gujarat        |
+|          50 | Aman      |    259 | Jaipur    | Rajasthan      |
+|          51 | Ravi      |    260 | Mumbai    | Maharashtra    |
+|          52 | Priyanka  |    261 | Delhi     | Delhi          |
+|          53 | Shubham   |    262 | Bengaluru | Karnataka      |
+|          54 | Tanvi     |    263 | Chennai   | Tamil Nadu     |
+|          55 | Ishita    |    264 | Hyderabad | Telangana      |
+|          56 | Arvind    |    265 | Pune      | Maharashtra    |
+|          57 | Neelam    |    266 | Kolkata   | West Bengal    |
+|          58 | Radhika   |    267 | Lucknow   | Uttar Pradesh  |
+|          59 | Poonam    |    268 | Ahmedabad | Gujarat        |
+|          60 | Amit      |    269 | Jaipur    | Rajasthan      |
+|          61 | Devendra  |    270 | Mumbai    | Maharashtra    |
+|          62 | Ankita    |    271 | Delhi     | Delhi          |
+|          63 | Manish    |    272 | Bengaluru | Karnataka      |
+|          64 | Sonal     |    273 | Chennai   | Tamil Nadu     |
+|          65 | Ravi      |    274 | Hyderabad | Telangana      |
+|          66 | Laxmi     |    275 | Pune      | Maharashtra    |
+|          67 | Pankaj    |    276 | Kolkata   | West Bengal    |
+|          68 | Suman     |    277 | Lucknow   | Uttar Pradesh  |
+|          69 | Swati     |    278 | Ahmedabad | Gujarat        |
+|          70 | Rinku     |    279 | Jaipur    | Rajasthan      |
+|          71 | Vinay     |    280 | Mumbai    | Maharashtra    |
+|          72 | Shivendra |    281 | Delhi     | Delhi          |
+|          73 | Rani      |    282 | Bengaluru | Karnataka      |
+|          74 | Tushar    |    283 | Chennai   | Tamil Nadu     |
+|          75 | Neetu     |    284 | Hyderabad | Telangana      |
+|          76 | Suman     |    285 | Pune      | Maharashtra    |
+|          77 | Shruti    |    286 | Kolkata   | West Bengal    |
+|          78 | Saurabh   |    287 | Lucknow   | Uttar Pradesh  |
+|          79 | Rekha     |    288 | Ahmedabad | Gujarat        |
+|          80 | Divya     |    289 | Jaipur    | Rajasthan      |
+|          81 | Sumit     |    290 | Mumbai    | Maharashtra    |
+|          82 | Harshita  |    291 | Delhi     | Delhi          |
+|          83 | Rachna    |    292 | Bengaluru | Karnataka      |
+|          84 | Pranav    |    293 | Chennai   | Tamil Nadu     |
+|          85 | Krishna   |    294 | Hyderabad | Telangana      |
+|          86 | Suman     |    295 | Pune      | Maharashtra    |
+|          87 | Manish    |    296 | Kolkata   | West Bengal    |
+|          88 | Sumit     |    297 | Lucknow   | Uttar Pradesh  |
+|          89 | Siddharth |    298 | Ahmedabad | Gujarat        |
+|          90 | Raghav    |    299 | Jaipur    | Rajasthan      |
+|          91 | Vikash    |    300 | Mumbai    | Maharashtra    |
+|          92 | Ashu      |    301 | Delhi     | Delhi          |
+|          93 | Nirmal    |    302 | Bengaluru | Karnataka      |
+|          94 | Basant    |    303 | Chennai   | Tamil Nadu     |
+|          95 | Rohini    |    304 | Hyderabad | Telangana      |
+|          96 | Madhur    |    305 | Pune      | Maharashtra    |
+|          97 | Ishwar    |    306 | Kolkata   | West Bengal    |
+|          98 | Nikita    |    307 | Lucknow   | Uttar Pradesh  |
+|          99 | Pradeep   |    308 | Ahmedabad | Gujarat        |
+|         100 | Zoya      |    310 | Bhopal    | Madhya Pradesh |
++-------------+-----------+--------+-----------+----------------+
+100 rows in set (0.00 sec)
+
+mysql> select * from customers order by State ASC;
++-------------+-----------+--------+-----------+----------------+
+| customer_id | name      | phn_no | city      | state          |
++-------------+-----------+--------+-----------+----------------+
+|          12 | Seema     |    221 | Delhi     | Delhi          |
+|           2 | Mira      |    211 | Delhi     | Delhi          |
+|          42 | Kavya     |    251 | Delhi     | Delhi          |
+|          52 | Priyanka  |    261 | Delhi     | Delhi          |
+|          22 | Neha      |    231 | Delhi     | Delhi          |
+|          92 | Ashu      |    301 | Delhi     | Delhi          |
+|          62 | Ankita    |    271 | Delhi     | Delhi          |
+|          32 | Kriti     |    241 | Delhi     | Delhi          |
+|          72 | Shivendra |    281 | Delhi     | Delhi          |
+|          82 | Harshita  |    291 | Delhi     | Delhi          |
+|          69 | Swati     |    278 | Ahmedabad | Gujarat        |
+|          79 | Rekha     |    288 | Ahmedabad | Gujarat        |
+|           9 | Sanya     |    218 | Ahmedabad | Gujarat        |
+|          89 | Siddharth |    298 | Ahmedabad | Gujarat        |
+|          19 | Niharika  |    228 | Ahmedabad | Gujarat        |
+|          59 | Poonam    |    268 | Ahmedabad | Gujarat        |
+|          99 | Pradeep   |    308 | Ahmedabad | Gujarat        |
+|          49 | Ashwini   |    258 | Ahmedabad | Gujarat        |
+|          29 | Aditi     |    238 | Ahmedabad | Gujarat        |
+|          39 | Kriti     |    248 | Ahmedabad | Gujarat        |
+|          13 | Vikas     |    222 | Bengaluru | Karnataka      |
+|          73 | Rani      |    282 | Bengaluru | Karnataka      |
+|          83 | Rachna    |    292 | Bengaluru | Karnataka      |
+|          63 | Manish    |    272 | Bengaluru | Karnataka      |
+|          53 | Shubham   |    262 | Bengaluru | Karnataka      |
+|          93 | Nirmal    |    302 | Bengaluru | Karnataka      |
+|          23 | Rohit     |    232 | Bengaluru | Karnataka      |
+|          43 | Rohit     |    252 | Bengaluru | Karnataka      |
+|           3 | Rajat     |    212 | Bengaluru | Karnataka      |
+|          33 | Rishabh   |    242 | Bengaluru | Karnataka      |
+|         100 | Zoya      |    310 | Bhopal    | Madhya Pradesh |
+|          51 | Ravi      |    260 | Mumbai    | Maharashtra    |
+|          21 | Harsh     |    230 | Mumbai    | Maharashtra    |
+|          96 | Madhur    |    305 | Pune      | Maharashtra    |
+|           6 | Priya     |    215 | Pune      | Maharashtra    |
+|          36 | Divya     |    245 | Pune      | Maharashtra    |
+|          91 | Vikash    |    300 | Mumbai    | Maharashtra    |
+|          86 | Suman     |    295 | Pune      | Maharashtra    |
+|          81 | Sumit     |    290 | Mumbai    | Maharashtra    |
+|          11 | Rajesh    |    220 | Mumbai    | Maharashtra    |
+|          41 | Suresh    |    250 | Mumbai    | Maharashtra    |
+|          76 | Suman     |    285 | Pune      | Maharashtra    |
+|          71 | Vinay     |    280 | Mumbai    | Maharashtra    |
+|          16 | Priya     |    225 | Pune      | Maharashtra    |
+|          31 | Krishna   |    240 | Mumbai    | Maharashtra    |
+|          46 | Sakshi    |    255 | Pune      | Maharashtra    |
+|          66 | Laxmi     |    275 | Pune      | Maharashtra    |
+|          61 | Devendra  |    270 | Mumbai    | Maharashtra    |
+|          26 | Aarav     |    235 | Pune      | Maharashtra    |
+|          56 | Arvind    |    265 | Pune      | Maharashtra    |
+|           1 | Rahul     |    210 | Mumbai    | Maharashtra    |
+|          80 | Divya     |    289 | Jaipur    | Rajasthan      |
+|          20 | Neeraj    |    229 | Jaipur    | Rajasthan      |
+|          60 | Amit      |    269 | Jaipur    | Rajasthan      |
+|          30 | Tanu      |    239 | Jaipur    | Rajasthan      |
+|          40 | Madhuri   |    249 | Jaipur    | Rajasthan      |
+|          10 | Nisha     |    219 | Jaipur    | Rajasthan      |
+|          50 | Aman      |    259 | Jaipur    | Rajasthan      |
+|          90 | Raghav    |    299 | Jaipur    | Rajasthan      |
+|          70 | Rinku     |    279 | Jaipur    | Rajasthan      |
+|          14 | Anjali    |    223 | Chennai   | Tamil Nadu     |
+|          54 | Tanvi     |    263 | Chennai   | Tamil Nadu     |
+|           4 | Amit      |    213 | Chennai   | Tamil Nadu     |
+|          34 | Pooja     |    243 | Chennai   | Tamil Nadu     |
+|          94 | Basant    |    303 | Chennai   | Tamil Nadu     |
+|          64 | Sonal     |    273 | Chennai   | Tamil Nadu     |
+|          84 | Pranav    |    293 | Chennai   | Tamil Nadu     |
+|          24 | Amit      |    233 | Chennai   | Tamil Nadu     |
+|          74 | Tushar    |    283 | Chennai   | Tamil Nadu     |
+|          44 | Komal     |    253 | Chennai   | Tamil Nadu     |
+|          45 | Vishal    |    254 | Hyderabad | Telangana      |
+|          15 | Aakash    |    224 | Hyderabad | Telangana      |
+|          85 | Krishna   |    294 | Hyderabad | Telangana      |
+|          65 | Ravi      |    274 | Hyderabad | Telangana      |
+|          75 | Neetu     |    284 | Hyderabad | Telangana      |
+|           5 | Mohit     |    214 | Hyderabad | Telangana      |
+|          95 | Rohini    |    304 | Hyderabad | Telangana      |
+|          55 | Ishita    |    264 | Hyderabad | Telangana      |
+|          25 | Shivani   |    234 | Hyderabad | Telangana      |
+|          35 | Rahul     |    244 | Hyderabad | Telangana      |
+|          28 | Varun     |    237 | Lucknow   | Uttar Pradesh  |
+|          78 | Saurabh   |    287 | Lucknow   | Uttar Pradesh  |
+|           8 | Samir     |    217 | Lucknow   | Uttar Pradesh  |
+|          38 | Neeraj    |    247 | Lucknow   | Uttar Pradesh  |
+|          88 | Sumit     |    297 | Lucknow   | Uttar Pradesh  |
+|          68 | Suman     |    277 | Lucknow   | Uttar Pradesh  |
+|          18 | Sonam     |    227 | Lucknow   | Uttar Pradesh  |
+|          48 | Vineet    |    257 | Lucknow   | Uttar Pradesh  |
+|          58 | Radhika   |    267 | Lucknow   | Uttar Pradesh  |
+|          98 | Nikita    |    307 | Lucknow   | Uttar Pradesh  |
+|          77 | Shruti    |    286 | Kolkata   | West Bengal    |
+|          27 | Nidhi     |    236 | Kolkata   | West Bengal    |
+|          87 | Manish    |    296 | Kolkata   | West Bengal    |
+|           7 | Anmol     |    216 | Kolkata   | West Bengal    |
+|          37 | Sandeep   |    246 | Kolkata   | West Bengal    |
+|          47 | Siddhi    |    256 | Kolkata   | West Bengal    |
+|          17 | Aman      |    226 | Kolkata   | West Bengal    |
+|          97 | Ishwar    |    306 | Kolkata   | West Bengal    |
+|          57 | Neelam    |    266 | Kolkata   | West Bengal    |
+|          67 | Pankaj    |    276 | Kolkata   | West Bengal    |
++-------------+-----------+--------+-----------+----------------+
+100 rows in set (0.00 sec)
+
+mysql> select * from customers order by State ASC limit 10;
++-------------+-----------+--------+-------+-------+
+| customer_id | name      | phn_no | city  | state |
++-------------+-----------+--------+-------+-------+
+|          82 | Harshita  |    291 | Delhi | Delhi |
+|           2 | Mira      |    211 | Delhi | Delhi |
+|          92 | Ashu      |    301 | Delhi | Delhi |
+|          42 | Kavya     |    251 | Delhi | Delhi |
+|          62 | Ankita    |    271 | Delhi | Delhi |
+|          12 | Seema     |    221 | Delhi | Delhi |
+|          52 | Priyanka  |    261 | Delhi | Delhi |
+|          72 | Shivendra |    281 | Delhi | Delhi |
+|          22 | Neha      |    231 | Delhi | Delhi |
+|          32 | Kriti     |    241 | Delhi | Delhi |
++-------------+-----------+--------+-------+-------+
+10 rows in set (0.00 sec)
+
+mysql> select * from customers limit 10 order by State ASC;
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'order by State ASC' at line 1
+mysql> select * from customers order by State DESC limit 10;
++-------------+---------+--------+---------+-------------+
+| customer_id | name    | phn_no | city    | state       |
++-------------+---------+--------+---------+-------------+
+|          97 | Ishwar  |    306 | Kolkata | West Bengal |
+|          57 | Neelam  |    266 | Kolkata | West Bengal |
+|          17 | Aman    |    226 | Kolkata | West Bengal |
+|          37 | Sandeep |    246 | Kolkata | West Bengal |
+|          47 | Siddhi  |    256 | Kolkata | West Bengal |
+|          77 | Shruti  |    286 | Kolkata | West Bengal |
+|           7 | Anmol   |    216 | Kolkata | West Bengal |
+|          87 | Manish  |    296 | Kolkata | West Bengal |
+|          67 | Pankaj  |    276 | Kolkata | West Bengal |
+|          27 | Nidhi   |    236 | Kolkata | West Bengal |
++-------------+---------+--------+---------+-------------+
+10 rows in set (0.01 sec)
+
+mysql> select * from customers where city = kolkata;
+ERROR 1054 (42S22): Unknown column 'kolkata' in 'where clause'
+mysql> select * from customers where city = 'kolkata';
++-------------+---------+--------+---------+-------------+
+| customer_id | name    | phn_no | city    | state       |
++-------------+---------+--------+---------+-------------+
+|           7 | Anmol   |    216 | Kolkata | West Bengal |
+|          17 | Aman    |    226 | Kolkata | West Bengal |
+|          27 | Nidhi   |    236 | Kolkata | West Bengal |
+|          37 | Sandeep |    246 | Kolkata | West Bengal |
+|          47 | Siddhi  |    256 | Kolkata | West Bengal |
+|          57 | Neelam  |    266 | Kolkata | West Bengal |
+|          67 | Pankaj  |    276 | Kolkata | West Bengal |
+|          77 | Shruti  |    286 | Kolkata | West Bengal |
+|          87 | Manish  |    296 | Kolkata | West Bengal |
+|          97 | Ishwar  |    306 | Kolkata | West Bengal |
++-------------+---------+--------+---------+-------------+
+10 rows in set (0.00 sec)
+
+mysql> select * from customers where city = 'kolkata' order by state asc;
++-------------+---------+--------+---------+-------------+
+| customer_id | name    | phn_no | city    | state       |
++-------------+---------+--------+---------+-------------+
+|           7 | Anmol   |    216 | Kolkata | West Bengal |
+|          17 | Aman    |    226 | Kolkata | West Bengal |
+|          27 | Nidhi   |    236 | Kolkata | West Bengal |
+|          37 | Sandeep |    246 | Kolkata | West Bengal |
+|          47 | Siddhi  |    256 | Kolkata | West Bengal |
+|          57 | Neelam  |    266 | Kolkata | West Bengal |
+|          67 | Pankaj  |    276 | Kolkata | West Bengal |
+|          77 | Shruti  |    286 | Kolkata | West Bengal |
+|          87 | Manish  |    296 | Kolkata | West Bengal |
+|          97 | Ishwar  |    306 | Kolkata | West Bengal |
++-------------+---------+--------+---------+-------------+
+10 rows in set (0.00 sec)
+
+mysql> select * from customers where city = 'kolkata' order by name asc;
++-------------+---------+--------+---------+-------------+
+| customer_id | name    | phn_no | city    | state       |
++-------------+---------+--------+---------+-------------+
+|          17 | Aman    |    226 | Kolkata | West Bengal |
+|           7 | Anmol   |    216 | Kolkata | West Bengal |
+|          97 | Ishwar  |    306 | Kolkata | West Bengal |
+|          87 | Manish  |    296 | Kolkata | West Bengal |
+|          57 | Neelam  |    266 | Kolkata | West Bengal |
+|          27 | Nidhi   |    236 | Kolkata | West Bengal |
+|          67 | Pankaj  |    276 | Kolkata | West Bengal |
+|          37 | Sandeep |    246 | Kolkata | West Bengal |
+|          77 | Shruti  |    286 | Kolkata | West Bengal |
+|          47 | Siddhi  |    256 | Kolkata | West Bengal |
++-------------+---------+--------+---------+-------------+
+10 rows in set (0.00 sec)
+
+mysql> select customer_id,name,state from customers;
++-------------+-----------+----------------+
+| customer_id | name      | state          |
++-------------+-----------+----------------+
+|           1 | Rahul     | Maharashtra    |
+|           2 | Mira      | Delhi          |
+|           3 | Rajat     | Karnataka      |
+|           4 | Amit      | Tamil Nadu     |
+|           5 | Mohit     | Telangana      |
+|           6 | Priya     | Maharashtra    |
+|           7 | Anmol     | West Bengal    |
+|           8 | Samir     | Uttar Pradesh  |
+|           9 | Sanya     | Gujarat        |
+|          10 | Nisha     | Rajasthan      |
+|          11 | Rajesh    | Maharashtra    |
+|          12 | Seema     | Delhi          |
+|          13 | Vikas     | Karnataka      |
+|          14 | Anjali    | Tamil Nadu     |
+|          15 | Aakash    | Telangana      |
+|          16 | Priya     | Maharashtra    |
+|          17 | Aman      | West Bengal    |
+|          18 | Sonam     | Uttar Pradesh  |
+|          19 | Niharika  | Gujarat        |
+|          20 | Neeraj    | Rajasthan      |
+|          21 | Harsh     | Maharashtra    |
+|          22 | Neha      | Delhi          |
+|          23 | Rohit     | Karnataka      |
+|          24 | Amit      | Tamil Nadu     |
+|          25 | Shivani   | Telangana      |
+|          26 | Aarav     | Maharashtra    |
+|          27 | Nidhi     | West Bengal    |
+|          28 | Varun     | Uttar Pradesh  |
+|          29 | Aditi     | Gujarat        |
+|          30 | Tanu      | Rajasthan      |
+|          31 | Krishna   | Maharashtra    |
+|          32 | Kriti     | Delhi          |
+|          33 | Rishabh   | Karnataka      |
+|          34 | Pooja     | Tamil Nadu     |
+|          35 | Rahul     | Telangana      |
+|          36 | Divya     | Maharashtra    |
+|          37 | Sandeep   | West Bengal    |
+|          38 | Neeraj    | Uttar Pradesh  |
+|          39 | Kriti     | Gujarat        |
+|          40 | Madhuri   | Rajasthan      |
+|          41 | Suresh    | Maharashtra    |
+|          42 | Kavya     | Delhi          |
+|          43 | Rohit     | Karnataka      |
+|          44 | Komal     | Tamil Nadu     |
+|          45 | Vishal    | Telangana      |
+|          46 | Sakshi    | Maharashtra    |
+|          47 | Siddhi    | West Bengal    |
+|          48 | Vineet    | Uttar Pradesh  |
+|          49 | Ashwini   | Gujarat        |
+|          50 | Aman      | Rajasthan      |
+|          51 | Ravi      | Maharashtra    |
+|          52 | Priyanka  | Delhi          |
+|          53 | Shubham   | Karnataka      |
+|          54 | Tanvi     | Tamil Nadu     |
+|          55 | Ishita    | Telangana      |
+|          56 | Arvind    | Maharashtra    |
+|          57 | Neelam    | West Bengal    |
+|          58 | Radhika   | Uttar Pradesh  |
+|          59 | Poonam    | Gujarat        |
+|          60 | Amit      | Rajasthan      |
+|          61 | Devendra  | Maharashtra    |
+|          62 | Ankita    | Delhi          |
+|          63 | Manish    | Karnataka      |
+|          64 | Sonal     | Tamil Nadu     |
+|          65 | Ravi      | Telangana      |
+|          66 | Laxmi     | Maharashtra    |
+|          67 | Pankaj    | West Bengal    |
+|          68 | Suman     | Uttar Pradesh  |
+|          69 | Swati     | Gujarat        |
+|          70 | Rinku     | Rajasthan      |
+|          71 | Vinay     | Maharashtra    |
+|          72 | Shivendra | Delhi          |
+|          73 | Rani      | Karnataka      |
+|          74 | Tushar    | Tamil Nadu     |
+|          75 | Neetu     | Telangana      |
+|          76 | Suman     | Maharashtra    |
+|          77 | Shruti    | West Bengal    |
+|          78 | Saurabh   | Uttar Pradesh  |
+|          79 | Rekha     | Gujarat        |
+|          80 | Divya     | Rajasthan      |
+|          81 | Sumit     | Maharashtra    |
+|          82 | Harshita  | Delhi          |
+|          83 | Rachna    | Karnataka      |
+|          84 | Pranav    | Tamil Nadu     |
+|          85 | Krishna   | Telangana      |
+|          86 | Suman     | Maharashtra    |
+|          87 | Manish    | West Bengal    |
+|          88 | Sumit     | Uttar Pradesh  |
+|          89 | Siddharth | Gujarat        |
+|          90 | Raghav    | Rajasthan      |
+|          91 | Vikash    | Maharashtra    |
+|          92 | Ashu      | Delhi          |
+|          93 | Nirmal    | Karnataka      |
+|          94 | Basant    | Tamil Nadu     |
+|          95 | Rohini    | Telangana      |
+|          96 | Madhur    | Maharashtra    |
+|          97 | Ishwar    | West Bengal    |
+|          98 | Nikita    | Uttar Pradesh  |
+|          99 | Pradeep   | Gujarat        |
+|         100 | Zoya      | Madhya Pradesh |
++-------------+-----------+----------------+
+100 rows in set (0.00 sec)
+
+mysql> select customer_id,name,state from customers ;
++-------------+-----------+----------------+
+| customer_id | name      | state          |
++-------------+-----------+----------------+
+|           1 | Rahul     | Maharashtra    |
+|           2 | Mira      | Delhi          |
+|           3 | Rajat     | Karnataka      |
+|           4 | Amit      | Tamil Nadu     |
+|           5 | Mohit     | Telangana      |
+|           6 | Priya     | Maharashtra    |
+|           7 | Anmol     | West Bengal    |
+|           8 | Samir     | Uttar Pradesh  |
+|           9 | Sanya     | Gujarat        |
+|          10 | Nisha     | Rajasthan      |
+|          11 | Rajesh    | Maharashtra    |
+|          12 | Seema     | Delhi          |
+|          13 | Vikas     | Karnataka      |
+|          14 | Anjali    | Tamil Nadu     |
+|          15 | Aakash    | Telangana      |
+|          16 | Priya     | Maharashtra    |
+|          17 | Aman      | West Bengal    |
+|          18 | Sonam     | Uttar Pradesh  |
+|          19 | Niharika  | Gujarat        |
+|          20 | Neeraj    | Rajasthan      |
+|          21 | Harsh     | Maharashtra    |
+|          22 | Neha      | Delhi          |
+|          23 | Rohit     | Karnataka      |
+|          24 | Amit      | Tamil Nadu     |
+|          25 | Shivani   | Telangana      |
+|          26 | Aarav     | Maharashtra    |
+|          27 | Nidhi     | West Bengal    |
+|          28 | Varun     | Uttar Pradesh  |
+|          29 | Aditi     | Gujarat        |
+|          30 | Tanu      | Rajasthan      |
+|          31 | Krishna   | Maharashtra    |
+|          32 | Kriti     | Delhi          |
+|          33 | Rishabh   | Karnataka      |
+|          34 | Pooja     | Tamil Nadu     |
+|          35 | Rahul     | Telangana      |
+|          36 | Divya     | Maharashtra    |
+|          37 | Sandeep   | West Bengal    |
+|          38 | Neeraj    | Uttar Pradesh  |
+|          39 | Kriti     | Gujarat        |
+|          40 | Madhuri   | Rajasthan      |
+|          41 | Suresh    | Maharashtra    |
+|          42 | Kavya     | Delhi          |
+|          43 | Rohit     | Karnataka      |
+|          44 | Komal     | Tamil Nadu     |
+|          45 | Vishal    | Telangana      |
+|          46 | Sakshi    | Maharashtra    |
+|          47 | Siddhi    | West Bengal    |
+|          48 | Vineet    | Uttar Pradesh  |
+|          49 | Ashwini   | Gujarat        |
+|          50 | Aman      | Rajasthan      |
+|          51 | Ravi      | Maharashtra    |
+|          52 | Priyanka  | Delhi          |
+|          53 | Shubham   | Karnataka      |
+|          54 | Tanvi     | Tamil Nadu     |
+|          55 | Ishita    | Telangana      |
+|          56 | Arvind    | Maharashtra    |
+|          57 | Neelam    | West Bengal    |
+|          58 | Radhika   | Uttar Pradesh  |
+|          59 | Poonam    | Gujarat        |
+|          60 | Amit      | Rajasthan      |
+|          61 | Devendra  | Maharashtra    |
+|          62 | Ankita    | Delhi          |
+|          63 | Manish    | Karnataka      |
+|          64 | Sonal     | Tamil Nadu     |
+|          65 | Ravi      | Telangana      |
+|          66 | Laxmi     | Maharashtra    |
+|          67 | Pankaj    | West Bengal    |
+|          68 | Suman     | Uttar Pradesh  |
+|          69 | Swati     | Gujarat        |
+|          70 | Rinku     | Rajasthan      |
+|          71 | Vinay     | Maharashtra    |
+|          72 | Shivendra | Delhi          |
+|          73 | Rani      | Karnataka      |
+|          74 | Tushar    | Tamil Nadu     |
+|          75 | Neetu     | Telangana      |
+|          76 | Suman     | Maharashtra    |
+|          77 | Shruti    | West Bengal    |
+|          78 | Saurabh   | Uttar Pradesh  |
+|          79 | Rekha     | Gujarat        |
+|          80 | Divya     | Rajasthan      |
+|          81 | Sumit     | Maharashtra    |
+|          82 | Harshita  | Delhi          |
+|          83 | Rachna    | Karnataka      |
+|          84 | Pranav    | Tamil Nadu     |
+|          85 | Krishna   | Telangana      |
+|          86 | Suman     | Maharashtra    |
+|          87 | Manish    | West Bengal    |
+|          88 | Sumit     | Uttar Pradesh  |
+|          89 | Siddharth | Gujarat        |
+|          90 | Raghav    | Rajasthan      |
+|          91 | Vikash    | Maharashtra    |
+|          92 | Ashu      | Delhi          |
+|          93 | Nirmal    | Karnataka      |
+|          94 | Basant    | Tamil Nadu     |
+|          95 | Rohini    | Telangana      |
+|          96 | Madhur    | Maharashtra    |
+|          97 | Ishwar    | West Bengal    |
+|          98 | Nikita    | Uttar Pradesh  |
+|          99 | Pradeep   | Gujarat        |
+|         100 | Zoya      | Madhya Pradesh |
++-------------+-----------+----------------+
+100 rows in set (0.00 sec)
+
+mysql> select customer_id,name,state from customers 
+    -> Order By State DESC;
++-------------+-----------+----------------+
+| customer_id | name      | state          |
++-------------+-----------+----------------+
+|          87 | Manish    | West Bengal    |
+|          27 | Nidhi     | West Bengal    |
+|          97 | Ishwar    | West Bengal    |
+|          77 | Shruti    | West Bengal    |
+|          37 | Sandeep   | West Bengal    |
+|          17 | Aman      | West Bengal    |
+|           7 | Anmol     | West Bengal    |
+|          67 | Pankaj    | West Bengal    |
+|          47 | Siddhi    | West Bengal    |
+|          57 | Neelam    | West Bengal    |
+|          68 | Suman     | Uttar Pradesh  |
+|          88 | Sumit     | Uttar Pradesh  |
+|           8 | Samir     | Uttar Pradesh  |
+|          18 | Sonam     | Uttar Pradesh  |
+|          58 | Radhika   | Uttar Pradesh  |
+|          38 | Neeraj    | Uttar Pradesh  |
+|          78 | Saurabh   | Uttar Pradesh  |
+|          48 | Vineet    | Uttar Pradesh  |
+|          98 | Nikita    | Uttar Pradesh  |
+|          28 | Varun     | Uttar Pradesh  |
+|          45 | Vishal    | Telangana      |
+|          55 | Ishita    | Telangana      |
+|          15 | Aakash    | Telangana      |
+|          95 | Rohini    | Telangana      |
+|           5 | Mohit     | Telangana      |
+|          65 | Ravi      | Telangana      |
+|          25 | Shivani   | Telangana      |
+|          75 | Neetu     | Telangana      |
+|          35 | Rahul     | Telangana      |
+|          85 | Krishna   | Telangana      |
+|          54 | Tanvi     | Tamil Nadu     |
+|          34 | Pooja     | Tamil Nadu     |
+|          74 | Tushar    | Tamil Nadu     |
+|          24 | Amit      | Tamil Nadu     |
+|          64 | Sonal     | Tamil Nadu     |
+|          84 | Pranav    | Tamil Nadu     |
+|          14 | Anjali    | Tamil Nadu     |
+|          44 | Komal     | Tamil Nadu     |
+|          94 | Basant    | Tamil Nadu     |
+|           4 | Amit      | Tamil Nadu     |
+|          70 | Rinku     | Rajasthan      |
+|          30 | Tanu      | Rajasthan      |
+|          80 | Divya     | Rajasthan      |
+|          20 | Neeraj    | Rajasthan      |
+|          40 | Madhuri   | Rajasthan      |
+|          60 | Amit      | Rajasthan      |
+|          90 | Raghav    | Rajasthan      |
+|          10 | Nisha     | Rajasthan      |
+|          50 | Aman      | Rajasthan      |
+|           1 | Rahul     | Maharashtra    |
+|          31 | Krishna   | Maharashtra    |
+|          96 | Madhur    | Maharashtra    |
+|           6 | Priya     | Maharashtra    |
+|          91 | Vikash    | Maharashtra    |
+|          46 | Sakshi    | Maharashtra    |
+|          56 | Arvind    | Maharashtra    |
+|          11 | Rajesh    | Maharashtra    |
+|          86 | Suman     | Maharashtra    |
+|          16 | Priya     | Maharashtra    |
+|          41 | Suresh    | Maharashtra    |
+|          61 | Devendra  | Maharashtra    |
+|          81 | Sumit     | Maharashtra    |
+|          21 | Harsh     | Maharashtra    |
+|          76 | Suman     | Maharashtra    |
+|          36 | Divya     | Maharashtra    |
+|          66 | Laxmi     | Maharashtra    |
+|          26 | Aarav     | Maharashtra    |
+|          71 | Vinay     | Maharashtra    |
+|          51 | Ravi      | Maharashtra    |
+|         100 | Zoya      | Madhya Pradesh |
+|          83 | Rachna    | Karnataka      |
+|           3 | Rajat     | Karnataka      |
+|          53 | Shubham   | Karnataka      |
+|          73 | Rani      | Karnataka      |
+|          93 | Nirmal    | Karnataka      |
+|          33 | Rishabh   | Karnataka      |
+|          43 | Rohit     | Karnataka      |
+|          23 | Rohit     | Karnataka      |
+|          13 | Vikas     | Karnataka      |
+|          63 | Manish    | Karnataka      |
+|          59 | Poonam    | Gujarat        |
+|          19 | Niharika  | Gujarat        |
+|          79 | Rekha     | Gujarat        |
+|          89 | Siddharth | Gujarat        |
+|          39 | Kriti     | Gujarat        |
+|          49 | Ashwini   | Gujarat        |
+|          29 | Aditi     | Gujarat        |
+|           9 | Sanya     | Gujarat        |
+|          99 | Pradeep   | Gujarat        |
+|          69 | Swati     | Gujarat        |
+|          82 | Harshita  | Delhi          |
+|          62 | Ankita    | Delhi          |
+|          42 | Kavya     | Delhi          |
+|          22 | Neha      | Delhi          |
+|          12 | Seema     | Delhi          |
+|          92 | Ashu      | Delhi          |
+|          72 | Shivendra | Delhi          |
+|          52 | Priyanka  | Delhi          |
+|          32 | Kriti     | Delhi          |
+|           2 | Mira      | Delhi          |
++-------------+-----------+----------------+
+100 rows in set (0.00 sec)
+
+mysql> there are two type of pegination cursor based and id based
+    -> ;
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'there are two type of pegination cursor based and id based' at line 1
+mysql> select customer_id,name,state from customers limit 5 offset 5;
++-------------+-------+---------------+
+| customer_id | name  | state         |
++-------------+-------+---------------+
+|           6 | Priya | Maharashtra   |
+|           7 | Anmol | West Bengal   |
+|           8 | Samir | Uttar Pradesh |
+|           9 | Sanya | Gujarat       |
+|          10 | Nisha | Rajasthan     |
++-------------+-------+---------------+
+5 rows in set (0.00 sec)
+
+mysql> select customer_id,name,state from customers limit 5;
++-------------+-------+-------------+
+| customer_id | name  | state       |
++-------------+-------+-------------+
+|           1 | Rahul | Maharashtra |
+|           2 | Mira  | Delhi       |
+|           3 | Rajat | Karnataka   |
+|           4 | Amit  | Tamil Nadu  |
+|           5 | Mohit | Telangana   |
++-------------+-------+-------------+
+5 rows in set (0.00 sec)
+
+mysql> select customer_id,name,state from customers limit 10;
++-------------+-------+---------------+
+| customer_id | name  | state         |
++-------------+-------+---------------+
+|           1 | Rahul | Maharashtra   |
+|           2 | Mira  | Delhi         |
+|           3 | Rajat | Karnataka     |
+|           4 | Amit  | Tamil Nadu    |
+|           5 | Mohit | Telangana     |
+|           6 | Priya | Maharashtra   |
+|           7 | Anmol | West Bengal   |
+|           8 | Samir | Uttar Pradesh |
+|           9 | Sanya | Gujarat       |
+|          10 | Nisha | Rajasthan     |
++-------------+-------+---------------+
+10 rows in set (0.00 sec)
+
+mysql> select distinct Customer_Name from Customer_Comlaints;
+ERROR 1146 (42S02): Table 'nst_mart.customer_comlaints' doesn't exist
+mysql> select distinct Customer_Name from Customer_Comlaints;
+ERROR 1146 (42S02): Table 'nst_mart.customer_comlaints' doesn't exist
+mysql> show tables
+    -> ;
++---------------------+
+| Tables_in_nst_mart  |
++---------------------+
+| categories          |
+| Customer_complaints |
+| customers           |
+| order_items         |
+| orders              |
+| payments            |
+| products            |
+| shipping            |
++---------------------+
+8 rows in set (0.00 sec)
+
+mysql> select distinct Customer_Name from Customer_complaints;
++---------------+
+| Customer_Name |
++---------------+
+| Rahul         |
+| Mira          |
+| Anjali        |
+| Aarav         |
+| Sonam         |
+| Shivani       |
+| Priya         |
+| Amit          |
+| Tushar        |
+| Mira Raj      |
+| Rajat Rai     |
+| Umesh Sharma  |
++---------------+
+12 rows in set (0.00 sec)
+
+mysql> select distinct Severtity from Customer_complaints;
+ERROR 1054 (42S22): Unknown column 'Severtity' in 'field list'
+mysql> select distinct Severity from Customer_complaints;
++----------+
+| Severity |
++----------+
+|        1 |
+|        3 |
+|        2 |
++----------+
+3 rows in set (0.00 sec)
+
+mysql> select distinct name from Customer_complaints;
+ERROR 1054 (42S22): Unknown column 'name' in 'field list'
+mysql> select distinct Customer_Name from Customer_complaints;
++---------------+
+| Customer_Name |
++---------------+
+| Rahul         |
+| Mira          |
+| Anjali        |
+| Aarav         |
+| Sonam         |
+| Shivani       |
+| Priya         |
+| Amit          |
+| Tushar        |
+| Mira Raj      |
+| Rajat Rai     |
+| Umesh Sharma  |
++---------------+
+12 rows in set (0.00 sec)
+
+mysql> select * from products;
++------------+-----------------------------+-----------------------------------------------------+----------+-------+-------------+
+| product_id | name                        | description                                         | price    | stock | category_id |
++------------+-----------------------------+-----------------------------------------------------+----------+-------+-------------+
+|        101 | Smartphone                  | Android smartphone                                  | 15000.00 |     1 |           1 |
+|        102 | Laptop                      | High-performance laptop                             | 45000.00 |     4 |           1 |
+|        103 | Fiction Novel               | NULL                                                |   500.00 |     1 |           2 |
+|        104 | T-Shirt                     | Cotton t-shirt                                      |   300.00 |     5 |           3 |
+|        105 | Mixer Grinder               | High-power mixer grinder                            |  2500.00 |    80 |           4 |
+|        106 | Football                    | NULL                                                |  1000.00 |   100 |           5 |
+|        107 | Smart Watch                 | Fitness tracking smartwatch                         |  5000.00 |    50 |           1 |
+|        108 | Headphones                  | Wireless headphones with noise cancellation         |  3500.00 |    30 |           1 |
+|        109 | Tablet                      | 10-inch Android tablet                              | 12000.00 |    20 |           1 |
+|        110 | Bluetooth Speaker           | Portable Bluetooth speaker                          |  1500.00 |    60 |           1 |
+|        111 | Camera                      | Digital camera with 4K video recording              | 25000.00 |    15 |           1 |
+|        112 | Smartphone Case             | Protective case for smartphones                     |   300.00 |   100 |           1 |
+|        113 | Laptop Bag                  | Waterproof laptop bag                               |  1200.00 |    50 |           1 |
+|        114 | E-Reader                    | Kindle e-reader                                     |  8000.00 |    40 |           2 |
+|        115 | Cooking Recipe Book         | Collection of world cuisines                        |   400.00 |   200 |           2 |
+|        116 | Self-Help Book              | Motivational book on personal growth                |   350.00 |   150 |           2 |
+|        117 | Fashion Magazine            | Monthly fashion trends magazine                     |   150.00 |   300 |           2 |
+|        118 | Sci-Fi Novel                | Science fiction novel                               |   250.00 |   120 |           2 |
+|        119 | Leather Jacket              | Genuine leather jacket                              |  3500.00 |    30 |           3 |
+|        120 | Running Shoes               | Comfortable running shoes                           |  2000.00 |    70 |           3 |
+|        121 | Jeans                       | Denim jeans for casual wear                         |  1200.00 |    80 |           3 |
+|        122 | Sneakers                    | Fashionable sneakers for casual wear                |  1800.00 |    50 |           3 |
+|        123 | T-Shirt Pack                | Pack of 3 cotton t-shirts                           |   800.00 |   100 |           3 |
+|        124 | Blender                     | NULL                                                |  3500.00 |    40 |           4 |
+|        125 | Microwave Oven              | Compact microwave oven                              |  5500.00 |    25 |           4 |
+|        126 | Refrigerator                | Double-door refrigerator                            | 22000.00 |    10 |           4 |
+|        127 | Dishwasher                  | Automatic dishwasher                                | 15000.00 |    15 |           4 |
+|        128 | Air Fryer                   | Low-oil air fryer for healthy cooking               |  8000.00 |    30 |           4 |
+|        129 | Football Shoes              | NULL                                                |  2500.00 |    60 |           5 |
+|        130 | Tennis Racket               | Professional tennis racket                          |  3500.00 |    40 |           5 |
+|        131 | Cricket Bat                 | Wooden cricket bat                                  |  1500.00 |   100 |           5 |
+|        132 | Basketball                  | NULL                                                |  1200.00 |    80 |           5 |
+|        133 | Dumbbells                   | Pair of adjustable dumbbells                        |  2500.00 |    50 |           5 |
+|        134 | Smartphone                  | 5G-enabled smartphone with 128GB storage            | 25000.00 |    25 |           1 |
+|        135 | Laptop                      | Gaming laptop with RTX graphics                     | 75000.00 |    10 |           1 |
+|        136 | Smart Watch                 | Waterproof smartwatch with heart rate monitor       |  4000.00 |    30 |           1 |
+|        137 | Washing Machine             | Fully automatic washing machine                     | 12000.00 |    20 |           4 |
+|        138 | Iron                        | Steam iron with ceramic soleplate                   |  1500.00 |    70 |           4 |
+|        139 | Hand Mixer                  | Electric hand mixer for baking                      |  1000.00 |    50 |           4 |
+|        140 | Shoes                       | Leather formal shoes                                |  2500.00 |    60 |           3 |
+|        141 | Handbag                     | Stylish leather handbag                             |  3000.00 |    30 |           3 |
+|        142 | Jacket                      | Winter jacket with insulation                       |  4000.00 |    40 |           3 |
+|        143 | T-shirt                     | Printed graphic t-shirt                             |   500.00 |   100 |           3 |
+|        144 | Watch                       | Analog wristwatch                                   |  1500.00 |    50 |           3 |
+|        145 | Bookshelf                   | Wooden bookshelf for home office                    |  3500.00 |    20 |           4 |
+|        146 | Coffee Table                | Stylish coffee table for living room                |  2500.00 |    25 |           4 |
+|        147 | Ceiling Fan                 | Energy-efficient ceiling fan                        |  1500.00 |    35 |           4 |
+|        148 | Pressure Cooker             | Stainless steel pressure cooker                     |  1200.00 |    50 |           4 |
+|        149 | Vacuum Cleaner              | Cordless vacuum cleaner for home use                |  5000.00 |    20 |           4 |
+|        150 | Dumbbell Set                | Adjustable dumbbell set with rack                   |  4500.00 |    15 |           5 |
+|        151 | Skipping Rope               | Jump rope for cardio exercise                       |   200.00 |   100 |           5 |
+|        152 | Yoga Mat                    | Non-slip yoga mat for practice                      |   800.00 |    70 |           5 |
+|        153 | Soccer Ball                 | Official size soccer ball                           |  1200.00 |    80 |           5 |
+|        154 | Gym Gloves                  | Weightlifting gym gloves                            |   500.00 |    60 |           5 |
+|        155 | Camping Tent                | 4-person camping tent                               |  7000.00 |    15 |           5 |
+|        156 | Smartphone Stand            | Adjustable smartphone stand                         |   350.00 |    90 |           1 |
+|        157 | Portable Charger            | Power bank with 20000mAh capacity                   |  1800.00 |    50 |           1 |
+|        158 | Bluetooth Earphones         | Wireless Bluetooth earphones with mic               |  1200.00 |    70 |           1 |
+|        159 | 4K TV                       | Smart 4K television with HDR                        | 45000.00 |    10 |           1 |
+|        160 | Electric Kettle             | Cordless electric kettle                            |  1200.00 |    50 |           4 |
+|        161 | Bread Maker                 | Automatic bread maker for home use                  |  5000.00 |    20 |           4 |
+|        162 | Food Processor              | Multi-functional food processor                     |  7000.00 |    25 |           4 |
+|        163 | Hair Dryer                  | Professional hair dryer with multiple heat settings |  1500.00 |    50 |           4 |
+|        164 | Tennis Racket               | Lightweight tennis racket for beginners             |  3000.00 |    50 |           5 |
+|        165 | Baseball Bat                | Aluminum baseball bat                               |  2200.00 |    30 |           5 |
+|        166 | Badminton Racket            | Carbon fiber badminton racket                       |  1500.00 |    70 |           5 |
+|        167 | Resistance Bands            | Set of resistance bands for exercise                |   800.00 |    50 |           5 |
+|        168 | Table Tennis Bat            | Professional table tennis bat                       |  1500.00 |   100 |           5 |
+|        169 | Gym Bench                   | Adjustable gym bench for workouts                   |  4500.00 |    20 |           5 |
+|        170 | Mobile Case                 | Shockproof mobile case for iPhone                   |   300.00 |   120 |           1 |
+|        171 | Smartphone Screen Protector | Tempered glass screen protector                     |   200.00 |   150 |           1 |
+|        172 | Camera Lens                 | Camera lens for professional photography            | 25000.00 |     5 |           1 |
+|        173 | VR Headset                  | Virtual reality headset for gaming                  | 15000.00 |    10 |           1 |
+|        174 | Laptop Stand                | Ergonomic laptop stand for desk                     |   800.00 |   100 |           1 |
+|        175 | Smartphone Charger          | Quick-charge USB-C smartphone charger               |   600.00 |   150 |           1 |
+|        176 | Portable Power Bank         | Power bank with 10000mAh capacity                   |  1200.00 |    90 |           1 |
+|        177 | Smartphone Grip             | Phone grip for better handling                      |   150.00 |   200 |           1 |
+|        178 | Laptop Sleeve               | Padded laptop sleeve for protection                 |   700.00 |    80 |           1 |
+|        179 | Smartphone Selfie Stick     | Selfie stick for mobile phones                      |   400.00 |   150 |           1 |
+|        180 | Over-Ear Headphones         | Noise-canceling over-ear headphones                 |  5000.00 |    30 |           1 |
+|        181 | E-Book Reader               | E-Book reader with 8GB storage                      |  8000.00 |    40 |           2 |
+|        182 | Cookbook                    | Healthy cooking cookbook                            |   350.00 |   250 |           2 |
+|        183 | Biographies                 | Biography of famous personalities                   |   400.00 |   150 |           2 |
+|        184 | Novel                       | Romantic novel by a famous author                   |   250.00 |   300 |           2 |
+|        185 | History Book                | Book about ancient history                          |   500.00 |   200 |           2 |
+|        186 | Sunglasses                  | Polarized sunglasses for summer                     |  1500.00 |    70 |           3 |
+|        187 | Winter Jacket               | Warm jacket for winter season                       |  4000.00 |    40 |           3 |
+|        188 | Raincoat                    | Waterproof raincoat for rainy season                |  1200.00 |    50 |           3 |
+|        189 | Sneakers                    | Comfortable sneakers for casual wear                |  1800.00 |   100 |           3 |
+|        190 | Jacket                      | Leather jacket for cold weather                     |  3500.00 |    20 |           3 |
+|        191 | Bedding Set                 | King-sized bedding set for bedroom                  |  3000.00 |    30 |           4 |
+|        192 | Pillow                      | Soft memory foam pillow                             |  1500.00 |   100 |           4 |
+|        193 | Curtains                    | Window curtains with floral designs                 |  1200.00 |   150 |           4 |
+|        194 | Air Conditioner             | Energy-efficient air conditioner                    | 35000.00 |    10 |           4 |
+|        195 | Recliner Chair              | Comfortable recliner for living room                |  8000.00 |    15 |           4 |
+|        196 | Yoga Mat                    | Eco-friendly yoga mat for exercise                  |   800.00 |   120 |           5 |
+|        197 | Resistance Bands            | Resistance bands for home workouts                  |   600.00 |   150 |           5 |
+|        198 | Basketball Shoes            | Specialized shoes for basketball players            |  2500.00 |    60 |           5 |
+|        199 | Tennis Shoes                | Durable tennis shoes for matches                    |  2200.00 |    50 |           5 |
+|        200 | Football Kit                | Complete football kit for players                   |  4000.00 |    40 |           5 |
++------------+-----------------------------+-----------------------------------------------------+----------+-------+-------------+
+100 rows in set (0.00 sec)
+
+mysql> select * from products where price <= 20000;
++------------+-----------------------------+-----------------------------------------------------+----------+-------+-------------+
+| product_id | name                        | description                                         | price    | stock | category_id |
++------------+-----------------------------+-----------------------------------------------------+----------+-------+-------------+
+|        101 | Smartphone                  | Android smartphone                                  | 15000.00 |     1 |           1 |
+|        103 | Fiction Novel               | NULL                                                |   500.00 |     1 |           2 |
+|        104 | T-Shirt                     | Cotton t-shirt                                      |   300.00 |     5 |           3 |
+|        105 | Mixer Grinder               | High-power mixer grinder                            |  2500.00 |    80 |           4 |
+|        106 | Football                    | NULL                                                |  1000.00 |   100 |           5 |
+|        107 | Smart Watch                 | Fitness tracking smartwatch                         |  5000.00 |    50 |           1 |
+|        108 | Headphones                  | Wireless headphones with noise cancellation         |  3500.00 |    30 |           1 |
+|        109 | Tablet                      | 10-inch Android tablet                              | 12000.00 |    20 |           1 |
+|        110 | Bluetooth Speaker           | Portable Bluetooth speaker                          |  1500.00 |    60 |           1 |
+|        112 | Smartphone Case             | Protective case for smartphones                     |   300.00 |   100 |           1 |
+|        113 | Laptop Bag                  | Waterproof laptop bag                               |  1200.00 |    50 |           1 |
+|        114 | E-Reader                    | Kindle e-reader                                     |  8000.00 |    40 |           2 |
+|        115 | Cooking Recipe Book         | Collection of world cuisines                        |   400.00 |   200 |           2 |
+|        116 | Self-Help Book              | Motivational book on personal growth                |   350.00 |   150 |           2 |
+|        117 | Fashion Magazine            | Monthly fashion trends magazine                     |   150.00 |   300 |           2 |
+|        118 | Sci-Fi Novel                | Science fiction novel                               |   250.00 |   120 |           2 |
+|        119 | Leather Jacket              | Genuine leather jacket                              |  3500.00 |    30 |           3 |
+|        120 | Running Shoes               | Comfortable running shoes                           |  2000.00 |    70 |           3 |
+|        121 | Jeans                       | Denim jeans for casual wear                         |  1200.00 |    80 |           3 |
+|        122 | Sneakers                    | Fashionable sneakers for casual wear                |  1800.00 |    50 |           3 |
+|        123 | T-Shirt Pack                | Pack of 3 cotton t-shirts                           |   800.00 |   100 |           3 |
+|        124 | Blender                     | NULL                                                |  3500.00 |    40 |           4 |
+|        125 | Microwave Oven              | Compact microwave oven                              |  5500.00 |    25 |           4 |
+|        127 | Dishwasher                  | Automatic dishwasher                                | 15000.00 |    15 |           4 |
+|        128 | Air Fryer                   | Low-oil air fryer for healthy cooking               |  8000.00 |    30 |           4 |
+|        129 | Football Shoes              | NULL                                                |  2500.00 |    60 |           5 |
+|        130 | Tennis Racket               | Professional tennis racket                          |  3500.00 |    40 |           5 |
+|        131 | Cricket Bat                 | Wooden cricket bat                                  |  1500.00 |   100 |           5 |
+|        132 | Basketball                  | NULL                                                |  1200.00 |    80 |           5 |
+|        133 | Dumbbells                   | Pair of adjustable dumbbells                        |  2500.00 |    50 |           5 |
+|        136 | Smart Watch                 | Waterproof smartwatch with heart rate monitor       |  4000.00 |    30 |           1 |
+|        137 | Washing Machine             | Fully automatic washing machine                     | 12000.00 |    20 |           4 |
+|        138 | Iron                        | Steam iron with ceramic soleplate                   |  1500.00 |    70 |           4 |
+|        139 | Hand Mixer                  | Electric hand mixer for baking                      |  1000.00 |    50 |           4 |
+|        140 | Shoes                       | Leather formal shoes                                |  2500.00 |    60 |           3 |
+|        141 | Handbag                     | Stylish leather handbag                             |  3000.00 |    30 |           3 |
+|        142 | Jacket                      | Winter jacket with insulation                       |  4000.00 |    40 |           3 |
+|        143 | T-shirt                     | Printed graphic t-shirt                             |   500.00 |   100 |           3 |
+|        144 | Watch                       | Analog wristwatch                                   |  1500.00 |    50 |           3 |
+|        145 | Bookshelf                   | Wooden bookshelf for home office                    |  3500.00 |    20 |           4 |
+|        146 | Coffee Table                | Stylish coffee table for living room                |  2500.00 |    25 |           4 |
+|        147 | Ceiling Fan                 | Energy-efficient ceiling fan                        |  1500.00 |    35 |           4 |
+|        148 | Pressure Cooker             | Stainless steel pressure cooker                     |  1200.00 |    50 |           4 |
+|        149 | Vacuum Cleaner              | Cordless vacuum cleaner for home use                |  5000.00 |    20 |           4 |
+|        150 | Dumbbell Set                | Adjustable dumbbell set with rack                   |  4500.00 |    15 |           5 |
+|        151 | Skipping Rope               | Jump rope for cardio exercise                       |   200.00 |   100 |           5 |
+|        152 | Yoga Mat                    | Non-slip yoga mat for practice                      |   800.00 |    70 |           5 |
+|        153 | Soccer Ball                 | Official size soccer ball                           |  1200.00 |    80 |           5 |
+|        154 | Gym Gloves                  | Weightlifting gym gloves                            |   500.00 |    60 |           5 |
+|        155 | Camping Tent                | 4-person camping tent                               |  7000.00 |    15 |           5 |
+|        156 | Smartphone Stand            | Adjustable smartphone stand                         |   350.00 |    90 |           1 |
+|        157 | Portable Charger            | Power bank with 20000mAh capacity                   |  1800.00 |    50 |           1 |
+|        158 | Bluetooth Earphones         | Wireless Bluetooth earphones with mic               |  1200.00 |    70 |           1 |
+|        160 | Electric Kettle             | Cordless electric kettle                            |  1200.00 |    50 |           4 |
+|        161 | Bread Maker                 | Automatic bread maker for home use                  |  5000.00 |    20 |           4 |
+|        162 | Food Processor              | Multi-functional food processor                     |  7000.00 |    25 |           4 |
+|        163 | Hair Dryer                  | Professional hair dryer with multiple heat settings |  1500.00 |    50 |           4 |
+|        164 | Tennis Racket               | Lightweight tennis racket for beginners             |  3000.00 |    50 |           5 |
+|        165 | Baseball Bat                | Aluminum baseball bat                               |  2200.00 |    30 |           5 |
+|        166 | Badminton Racket            | Carbon fiber badminton racket                       |  1500.00 |    70 |           5 |
+|        167 | Resistance Bands            | Set of resistance bands for exercise                |   800.00 |    50 |           5 |
+|        168 | Table Tennis Bat            | Professional table tennis bat                       |  1500.00 |   100 |           5 |
+|        169 | Gym Bench                   | Adjustable gym bench for workouts                   |  4500.00 |    20 |           5 |
+|        170 | Mobile Case                 | Shockproof mobile case for iPhone                   |   300.00 |   120 |           1 |
+|        171 | Smartphone Screen Protector | Tempered glass screen protector                     |   200.00 |   150 |           1 |
+|        173 | VR Headset                  | Virtual reality headset for gaming                  | 15000.00 |    10 |           1 |
+|        174 | Laptop Stand                | Ergonomic laptop stand for desk                     |   800.00 |   100 |           1 |
+|        175 | Smartphone Charger          | Quick-charge USB-C smartphone charger               |   600.00 |   150 |           1 |
+|        176 | Portable Power Bank         | Power bank with 10000mAh capacity                   |  1200.00 |    90 |           1 |
+|        177 | Smartphone Grip             | Phone grip for better handling                      |   150.00 |   200 |           1 |
+|        178 | Laptop Sleeve               | Padded laptop sleeve for protection                 |   700.00 |    80 |           1 |
+|        179 | Smartphone Selfie Stick     | Selfie stick for mobile phones                      |   400.00 |   150 |           1 |
+|        180 | Over-Ear Headphones         | Noise-canceling over-ear headphones                 |  5000.00 |    30 |           1 |
+|        181 | E-Book Reader               | E-Book reader with 8GB storage                      |  8000.00 |    40 |           2 |
+|        182 | Cookbook                    | Healthy cooking cookbook                            |   350.00 |   250 |           2 |
+|        183 | Biographies                 | Biography of famous personalities                   |   400.00 |   150 |           2 |
+|        184 | Novel                       | Romantic novel by a famous author                   |   250.00 |   300 |           2 |
+|        185 | History Book                | Book about ancient history                          |   500.00 |   200 |           2 |
+|        186 | Sunglasses                  | Polarized sunglasses for summer                     |  1500.00 |    70 |           3 |
+|        187 | Winter Jacket               | Warm jacket for winter season                       |  4000.00 |    40 |           3 |
+|        188 | Raincoat                    | Waterproof raincoat for rainy season                |  1200.00 |    50 |           3 |
+|        189 | Sneakers                    | Comfortable sneakers for casual wear                |  1800.00 |   100 |           3 |
+|        190 | Jacket                      | Leather jacket for cold weather                     |  3500.00 |    20 |           3 |
+|        191 | Bedding Set                 | King-sized bedding set for bedroom                  |  3000.00 |    30 |           4 |
+|        192 | Pillow                      | Soft memory foam pillow                             |  1500.00 |   100 |           4 |
+|        193 | Curtains                    | Window curtains with floral designs                 |  1200.00 |   150 |           4 |
+|        195 | Recliner Chair              | Comfortable recliner for living room                |  8000.00 |    15 |           4 |
+|        196 | Yoga Mat                    | Eco-friendly yoga mat for exercise                  |   800.00 |   120 |           5 |
+|        197 | Resistance Bands            | Resistance bands for home workouts                  |   600.00 |   150 |           5 |
+|        198 | Basketball Shoes            | Specialized shoes for basketball players            |  2500.00 |    60 |           5 |
+|        199 | Tennis Shoes                | Durable tennis shoes for matches                    |  2200.00 |    50 |           5 |
+|        200 | Football Kit                | Complete football kit for players                   |  4000.00 |    40 |           5 |
++------------+-----------------------------+-----------------------------------------------------+----------+-------+-------------+
+92 rows in set (0.01 sec)
+
+mysql> select * from products where price <= 200;
++------------+-----------------------------+---------------------------------+--------+-------+-------------+
+| product_id | name                        | description                     | price  | stock | category_id |
++------------+-----------------------------+---------------------------------+--------+-------+-------------+
+|        117 | Fashion Magazine            | Monthly fashion trends magazine | 150.00 |   300 |           2 |
+|        151 | Skipping Rope               | Jump rope for cardio exercise   | 200.00 |   100 |           5 |
+|        171 | Smartphone Screen Protector | Tempered glass screen protector | 200.00 |   150 |           1 |
+|        177 | Smartphone Grip             | Phone grip for better handling  | 150.00 |   200 |           1 |
++------------+-----------------------------+---------------------------------+--------+-------+-------------+
+4 rows in set (0.00 sec)
+
+mysql> select * from products where price >= 800 and price <= 200;
+Empty set (0.00 sec)
+
+mysql> select * from products where price <= 800 and price <= 200;
++------------+-----------------------------+---------------------------------+--------+-------+-------------+
+| product_id | name                        | description                     | price  | stock | category_id |
++------------+-----------------------------+---------------------------------+--------+-------+-------------+
+|        117 | Fashion Magazine            | Monthly fashion trends magazine | 150.00 |   300 |           2 |
+|        151 | Skipping Rope               | Jump rope for cardio exercise   | 200.00 |   100 |           5 |
+|        171 | Smartphone Screen Protector | Tempered glass screen protector | 200.00 |   150 |           1 |
+|        177 | Smartphone Grip             | Phone grip for better handling  | 150.00 |   200 |           1 |
++------------+-----------------------------+---------------------------------+--------+-------+-------------+
+4 rows in set (0.00 sec)
+
+mysql> select * from products where price <= 800 and price >= 200;
++------------+-----------------------------+---------------------------------------+--------+-------+-------------+
+| product_id | name                        | description                           | price  | stock | category_id |
++------------+-----------------------------+---------------------------------------+--------+-------+-------------+
+|        103 | Fiction Novel               | NULL                                  | 500.00 |     1 |           2 |
+|        104 | T-Shirt                     | Cotton t-shirt                        | 300.00 |     5 |           3 |
+|        112 | Smartphone Case             | Protective case for smartphones       | 300.00 |   100 |           1 |
+|        115 | Cooking Recipe Book         | Collection of world cuisines          | 400.00 |   200 |           2 |
+|        116 | Self-Help Book              | Motivational book on personal growth  | 350.00 |   150 |           2 |
+|        118 | Sci-Fi Novel                | Science fiction novel                 | 250.00 |   120 |           2 |
+|        123 | T-Shirt Pack                | Pack of 3 cotton t-shirts             | 800.00 |   100 |           3 |
+|        143 | T-shirt                     | Printed graphic t-shirt               | 500.00 |   100 |           3 |
+|        151 | Skipping Rope               | Jump rope for cardio exercise         | 200.00 |   100 |           5 |
+|        152 | Yoga Mat                    | Non-slip yoga mat for practice        | 800.00 |    70 |           5 |
+|        154 | Gym Gloves                  | Weightlifting gym gloves              | 500.00 |    60 |           5 |
+|        156 | Smartphone Stand            | Adjustable smartphone stand           | 350.00 |    90 |           1 |
+|        167 | Resistance Bands            | Set of resistance bands for exercise  | 800.00 |    50 |           5 |
+|        170 | Mobile Case                 | Shockproof mobile case for iPhone     | 300.00 |   120 |           1 |
+|        171 | Smartphone Screen Protector | Tempered glass screen protector       | 200.00 |   150 |           1 |
+|        174 | Laptop Stand                | Ergonomic laptop stand for desk       | 800.00 |   100 |           1 |
+|        175 | Smartphone Charger          | Quick-charge USB-C smartphone charger | 600.00 |   150 |           1 |
+|        178 | Laptop Sleeve               | Padded laptop sleeve for protection   | 700.00 |    80 |           1 |
+|        179 | Smartphone Selfie Stick     | Selfie stick for mobile phones        | 400.00 |   150 |           1 |
+|        182 | Cookbook                    | Healthy cooking cookbook              | 350.00 |   250 |           2 |
+|        183 | Biographies                 | Biography of famous personalities     | 400.00 |   150 |           2 |
+|        184 | Novel                       | Romantic novel by a famous author     | 250.00 |   300 |           2 |
+|        185 | History Book                | Book about ancient history            | 500.00 |   200 |           2 |
+|        196 | Yoga Mat                    | Eco-friendly yoga mat for exercise    | 800.00 |   120 |           5 |
+|        197 | Resistance Bands            | Resistance bands for home workouts    | 600.00 |   150 |           5 |
++------------+-----------------------------+---------------------------------------+--------+-------+-------------+
+25 rows in set (0.00 sec)
+
+mysql> select * from products where stock = ;
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '' at line 1
+mysql> select * from products where stock = 1;
++------------+---------------+--------------------+----------+-------+-------------+
+| product_id | name          | description        | price    | stock | category_id |
++------------+---------------+--------------------+----------+-------+-------------+
+|        101 | Smartphone    | Android smartphone | 15000.00 |     1 |           1 |
+|        103 | Fiction Novel | NULL               |   500.00 |     1 |           2 |
++------------+---------------+--------------------+----------+-------+-------------+
+2 rows in set (0.00 sec)
+
+mysql> select * from products where price >= 20000;
++------------+-----------------+------------------------------------------+----------+-------+-------------+
+| product_id | name            | description                              | price    | stock | category_id |
++------------+-----------------+------------------------------------------+----------+-------+-------------+
+|        102 | Laptop          | High-performance laptop                  | 45000.00 |     4 |           1 |
+|        111 | Camera          | Digital camera with 4K video recording   | 25000.00 |    15 |           1 |
+|        126 | Refrigerator    | Double-door refrigerator                 | 22000.00 |    10 |           4 |
+|        134 | Smartphone      | 5G-enabled smartphone with 128GB storage | 25000.00 |    25 |           1 |
+|        135 | Laptop          | Gaming laptop with RTX graphics          | 75000.00 |    10 |           1 |
+|        159 | 4K TV           | Smart 4K television with HDR             | 45000.00 |    10 |           1 |
+|        172 | Camera Lens     | Camera lens for professional photography | 25000.00 |     5 |           1 |
+|        194 | Air Conditioner | Energy-efficient air conditioner         | 35000.00 |    10 |           4 |
++------------+-----------------+------------------------------------------+----------+-------+-------------+
+8 rows in set (0.00 sec)
+
+mysql> select * from products where category_id != 1 and price > 1000 and price < 15000;
++------------+------------------+-----------------------------------------------------+----------+-------+-------------+
+| product_id | name             | description                                         | price    | stock | category_id |
++------------+------------------+-----------------------------------------------------+----------+-------+-------------+
+|        105 | Mixer Grinder    | High-power mixer grinder                            |  2500.00 |    80 |           4 |
+|        114 | E-Reader         | Kindle e-reader                                     |  8000.00 |    40 |           2 |
+|        119 | Leather Jacket   | Genuine leather jacket                              |  3500.00 |    30 |           3 |
+|        120 | Running Shoes    | Comfortable running shoes                           |  2000.00 |    70 |           3 |
+|        121 | Jeans            | Denim jeans for casual wear                         |  1200.00 |    80 |           3 |
+|        122 | Sneakers         | Fashionable sneakers for casual wear                |  1800.00 |    50 |           3 |
+|        124 | Blender          | NULL                                                |  3500.00 |    40 |           4 |
+|        125 | Microwave Oven   | Compact microwave oven                              |  5500.00 |    25 |           4 |
+|        128 | Air Fryer        | Low-oil air fryer for healthy cooking               |  8000.00 |    30 |           4 |
+|        129 | Football Shoes   | NULL                                                |  2500.00 |    60 |           5 |
+|        130 | Tennis Racket    | Professional tennis racket                          |  3500.00 |    40 |           5 |
+|        131 | Cricket Bat      | Wooden cricket bat                                  |  1500.00 |   100 |           5 |
+|        132 | Basketball       | NULL                                                |  1200.00 |    80 |           5 |
+|        133 | Dumbbells        | Pair of adjustable dumbbells                        |  2500.00 |    50 |           5 |
+|        137 | Washing Machine  | Fully automatic washing machine                     | 12000.00 |    20 |           4 |
+|        138 | Iron             | Steam iron with ceramic soleplate                   |  1500.00 |    70 |           4 |
+|        140 | Shoes            | Leather formal shoes                                |  2500.00 |    60 |           3 |
+|        141 | Handbag          | Stylish leather handbag                             |  3000.00 |    30 |           3 |
+|        142 | Jacket           | Winter jacket with insulation                       |  4000.00 |    40 |           3 |
+|        144 | Watch            | Analog wristwatch                                   |  1500.00 |    50 |           3 |
+|        145 | Bookshelf        | Wooden bookshelf for home office                    |  3500.00 |    20 |           4 |
+|        146 | Coffee Table     | Stylish coffee table for living room                |  2500.00 |    25 |           4 |
+|        147 | Ceiling Fan      | Energy-efficient ceiling fan                        |  1500.00 |    35 |           4 |
+|        148 | Pressure Cooker  | Stainless steel pressure cooker                     |  1200.00 |    50 |           4 |
+|        149 | Vacuum Cleaner   | Cordless vacuum cleaner for home use                |  5000.00 |    20 |           4 |
+|        150 | Dumbbell Set     | Adjustable dumbbell set with rack                   |  4500.00 |    15 |           5 |
+|        153 | Soccer Ball      | Official size soccer ball                           |  1200.00 |    80 |           5 |
+|        155 | Camping Tent     | 4-person camping tent                               |  7000.00 |    15 |           5 |
+|        160 | Electric Kettle  | Cordless electric kettle                            |  1200.00 |    50 |           4 |
+|        161 | Bread Maker      | Automatic bread maker for home use                  |  5000.00 |    20 |           4 |
+|        162 | Food Processor   | Multi-functional food processor                     |  7000.00 |    25 |           4 |
+|        163 | Hair Dryer       | Professional hair dryer with multiple heat settings |  1500.00 |    50 |           4 |
+|        164 | Tennis Racket    | Lightweight tennis racket for beginners             |  3000.00 |    50 |           5 |
+|        165 | Baseball Bat     | Aluminum baseball bat                               |  2200.00 |    30 |           5 |
+|        166 | Badminton Racket | Carbon fiber badminton racket                       |  1500.00 |    70 |           5 |
+|        168 | Table Tennis Bat | Professional table tennis bat                       |  1500.00 |   100 |           5 |
+|        169 | Gym Bench        | Adjustable gym bench for workouts                   |  4500.00 |    20 |           5 |
+|        181 | E-Book Reader    | E-Book reader with 8GB storage                      |  8000.00 |    40 |           2 |
+|        186 | Sunglasses       | Polarized sunglasses for summer                     |  1500.00 |    70 |           3 |
+|        187 | Winter Jacket    | Warm jacket for winter season                       |  4000.00 |    40 |           3 |
+|        188 | Raincoat         | Waterproof raincoat for rainy season                |  1200.00 |    50 |           3 |
+|        189 | Sneakers         | Comfortable sneakers for casual wear                |  1800.00 |   100 |           3 |
+|        190 | Jacket           | Leather jacket for cold weather                     |  3500.00 |    20 |           3 |
+|        191 | Bedding Set      | King-sized bedding set for bedroom                  |  3000.00 |    30 |           4 |
+|        192 | Pillow           | Soft memory foam pillow                             |  1500.00 |   100 |           4 |
+|        193 | Curtains         | Window curtains with floral designs                 |  1200.00 |   150 |           4 |
+|        195 | Recliner Chair   | Comfortable recliner for living room                |  8000.00 |    15 |           4 |
+|        198 | Basketball Shoes | Specialized shoes for basketball players            |  2500.00 |    60 |           5 |
+|        199 | Tennis Shoes     | Durable tennis shoes for matches                    |  2200.00 |    50 |           5 |
+|        200 | Football Kit     | Complete football kit for players                   |  4000.00 |    40 |           5 |
++------------+------------------+-----------------------------------------------------+----------+-------+-------------+
+50 rows in set (0.00 sec)
+
+mysql> select * from products where description = NULL;
+Empty set (0.00 sec)
+
+mysql> select * from products where description = NOT NULL;
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NOT NULL' at line 1
+mysql> select * from products where description != NULL;
+Empty set (0.00 sec)
+
+mysql> select * from products where description is NULL;
++------------+----------------+-------------+---------+-------+-------------+
+| product_id | name           | description | price   | stock | category_id |
++------------+----------------+-------------+---------+-------+-------------+
+|        103 | Fiction Novel  | NULL        |  500.00 |     1 |           2 |
+|        106 | Football       | NULL        | 1000.00 |   100 |           5 |
+|        124 | Blender        | NULL        | 3500.00 |    40 |           4 |
+|        129 | Football Shoes | NULL        | 2500.00 |    60 |           5 |
+|        132 | Basketball     | NULL        | 1200.00 |    80 |           5 |
++------------+----------------+-------------+---------+-------+-------------+
+5 rows in set (0.01 sec)
+
+mysql> select * from products where description is not NULL;
++------------+-----------------------------+-----------------------------------------------------+----------+-------+-------------+
+| product_id | name                        | description                                         | price    | stock | category_id |
++------------+-----------------------------+-----------------------------------------------------+----------+-------+-------------+
+|        101 | Smartphone                  | Android smartphone                                  | 15000.00 |     1 |           1 |
+|        102 | Laptop                      | High-performance laptop                             | 45000.00 |     4 |           1 |
+|        104 | T-Shirt                     | Cotton t-shirt                                      |   300.00 |     5 |           3 |
+|        105 | Mixer Grinder               | High-power mixer grinder                            |  2500.00 |    80 |           4 |
+|        107 | Smart Watch                 | Fitness tracking smartwatch                         |  5000.00 |    50 |           1 |
+|        108 | Headphones                  | Wireless headphones with noise cancellation         |  3500.00 |    30 |           1 |
+|        109 | Tablet                      | 10-inch Android tablet                              | 12000.00 |    20 |           1 |
+|        110 | Bluetooth Speaker           | Portable Bluetooth speaker                          |  1500.00 |    60 |           1 |
+|        111 | Camera                      | Digital camera with 4K video recording              | 25000.00 |    15 |           1 |
+|        112 | Smartphone Case             | Protective case for smartphones                     |   300.00 |   100 |           1 |
+|        113 | Laptop Bag                  | Waterproof laptop bag                               |  1200.00 |    50 |           1 |
+|        114 | E-Reader                    | Kindle e-reader                                     |  8000.00 |    40 |           2 |
+|        115 | Cooking Recipe Book         | Collection of world cuisines                        |   400.00 |   200 |           2 |
+|        116 | Self-Help Book              | Motivational book on personal growth                |   350.00 |   150 |           2 |
+|        117 | Fashion Magazine            | Monthly fashion trends magazine                     |   150.00 |   300 |           2 |
+|        118 | Sci-Fi Novel                | Science fiction novel                               |   250.00 |   120 |           2 |
+|        119 | Leather Jacket              | Genuine leather jacket                              |  3500.00 |    30 |           3 |
+|        120 | Running Shoes               | Comfortable running shoes                           |  2000.00 |    70 |           3 |
+|        121 | Jeans                       | Denim jeans for casual wear                         |  1200.00 |    80 |           3 |
+|        122 | Sneakers                    | Fashionable sneakers for casual wear                |  1800.00 |    50 |           3 |
+|        123 | T-Shirt Pack                | Pack of 3 cotton t-shirts                           |   800.00 |   100 |           3 |
+|        125 | Microwave Oven              | Compact microwave oven                              |  5500.00 |    25 |           4 |
+|        126 | Refrigerator                | Double-door refrigerator                            | 22000.00 |    10 |           4 |
+|        127 | Dishwasher                  | Automatic dishwasher                                | 15000.00 |    15 |           4 |
+|        128 | Air Fryer                   | Low-oil air fryer for healthy cooking               |  8000.00 |    30 |           4 |
+|        130 | Tennis Racket               | Professional tennis racket                          |  3500.00 |    40 |           5 |
+|        131 | Cricket Bat                 | Wooden cricket bat                                  |  1500.00 |   100 |           5 |
+|        133 | Dumbbells                   | Pair of adjustable dumbbells                        |  2500.00 |    50 |           5 |
+|        134 | Smartphone                  | 5G-enabled smartphone with 128GB storage            | 25000.00 |    25 |           1 |
+|        135 | Laptop                      | Gaming laptop with RTX graphics                     | 75000.00 |    10 |           1 |
+|        136 | Smart Watch                 | Waterproof smartwatch with heart rate monitor       |  4000.00 |    30 |           1 |
+|        137 | Washing Machine             | Fully automatic washing machine                     | 12000.00 |    20 |           4 |
+|        138 | Iron                        | Steam iron with ceramic soleplate                   |  1500.00 |    70 |           4 |
+|        139 | Hand Mixer                  | Electric hand mixer for baking                      |  1000.00 |    50 |           4 |
+|        140 | Shoes                       | Leather formal shoes                                |  2500.00 |    60 |           3 |
+|        141 | Handbag                     | Stylish leather handbag                             |  3000.00 |    30 |           3 |
+|        142 | Jacket                      | Winter jacket with insulation                       |  4000.00 |    40 |           3 |
+|        143 | T-shirt                     | Printed graphic t-shirt                             |   500.00 |   100 |           3 |
+|        144 | Watch                       | Analog wristwatch                                   |  1500.00 |    50 |           3 |
+|        145 | Bookshelf                   | Wooden bookshelf for home office                    |  3500.00 |    20 |           4 |
+|        146 | Coffee Table                | Stylish coffee table for living room                |  2500.00 |    25 |           4 |
+|        147 | Ceiling Fan                 | Energy-efficient ceiling fan                        |  1500.00 |    35 |           4 |
+|        148 | Pressure Cooker             | Stainless steel pressure cooker                     |  1200.00 |    50 |           4 |
+|        149 | Vacuum Cleaner              | Cordless vacuum cleaner for home use                |  5000.00 |    20 |           4 |
+|        150 | Dumbbell Set                | Adjustable dumbbell set with rack                   |  4500.00 |    15 |           5 |
+|        151 | Skipping Rope               | Jump rope for cardio exercise                       |   200.00 |   100 |           5 |
+|        152 | Yoga Mat                    | Non-slip yoga mat for practice                      |   800.00 |    70 |           5 |
+|        153 | Soccer Ball                 | Official size soccer ball                           |  1200.00 |    80 |           5 |
+|        154 | Gym Gloves                  | Weightlifting gym gloves                            |   500.00 |    60 |           5 |
+|        155 | Camping Tent                | 4-person camping tent                               |  7000.00 |    15 |           5 |
+|        156 | Smartphone Stand            | Adjustable smartphone stand                         |   350.00 |    90 |           1 |
+|        157 | Portable Charger            | Power bank with 20000mAh capacity                   |  1800.00 |    50 |           1 |
+|        158 | Bluetooth Earphones         | Wireless Bluetooth earphones with mic               |  1200.00 |    70 |           1 |
+|        159 | 4K TV                       | Smart 4K television with HDR                        | 45000.00 |    10 |           1 |
+|        160 | Electric Kettle             | Cordless electric kettle                            |  1200.00 |    50 |           4 |
+|        161 | Bread Maker                 | Automatic bread maker for home use                  |  5000.00 |    20 |           4 |
+|        162 | Food Processor              | Multi-functional food processor                     |  7000.00 |    25 |           4 |
+|        163 | Hair Dryer                  | Professional hair dryer with multiple heat settings |  1500.00 |    50 |           4 |
+|        164 | Tennis Racket               | Lightweight tennis racket for beginners             |  3000.00 |    50 |           5 |
+|        165 | Baseball Bat                | Aluminum baseball bat                               |  2200.00 |    30 |           5 |
+|        166 | Badminton Racket            | Carbon fiber badminton racket                       |  1500.00 |    70 |           5 |
+|        167 | Resistance Bands            | Set of resistance bands for exercise                |   800.00 |    50 |           5 |
+|        168 | Table Tennis Bat            | Professional table tennis bat                       |  1500.00 |   100 |           5 |
+|        169 | Gym Bench                   | Adjustable gym bench for workouts                   |  4500.00 |    20 |           5 |
+|        170 | Mobile Case                 | Shockproof mobile case for iPhone                   |   300.00 |   120 |           1 |
+|        171 | Smartphone Screen Protector | Tempered glass screen protector                     |   200.00 |   150 |           1 |
+|        172 | Camera Lens                 | Camera lens for professional photography            | 25000.00 |     5 |           1 |
+|        173 | VR Headset                  | Virtual reality headset for gaming                  | 15000.00 |    10 |           1 |
+|        174 | Laptop Stand                | Ergonomic laptop stand for desk                     |   800.00 |   100 |           1 |
+|        175 | Smartphone Charger          | Quick-charge USB-C smartphone charger               |   600.00 |   150 |           1 |
+|        176 | Portable Power Bank         | Power bank with 10000mAh capacity                   |  1200.00 |    90 |           1 |
+|        177 | Smartphone Grip             | Phone grip for better handling                      |   150.00 |   200 |           1 |
+|        178 | Laptop Sleeve               | Padded laptop sleeve for protection                 |   700.00 |    80 |           1 |
+|        179 | Smartphone Selfie Stick     | Selfie stick for mobile phones                      |   400.00 |   150 |           1 |
+|        180 | Over-Ear Headphones         | Noise-canceling over-ear headphones                 |  5000.00 |    30 |           1 |
+|        181 | E-Book Reader               | E-Book reader with 8GB storage                      |  8000.00 |    40 |           2 |
+|        182 | Cookbook                    | Healthy cooking cookbook                            |   350.00 |   250 |           2 |
+|        183 | Biographies                 | Biography of famous personalities                   |   400.00 |   150 |           2 |
+|        184 | Novel                       | Romantic novel by a famous author                   |   250.00 |   300 |           2 |
+|        185 | History Book                | Book about ancient history                          |   500.00 |   200 |           2 |
+|        186 | Sunglasses                  | Polarized sunglasses for summer                     |  1500.00 |    70 |           3 |
+|        187 | Winter Jacket               | Warm jacket for winter season                       |  4000.00 |    40 |           3 |
+|        188 | Raincoat                    | Waterproof raincoat for rainy season                |  1200.00 |    50 |           3 |
+|        189 | Sneakers                    | Comfortable sneakers for casual wear                |  1800.00 |   100 |           3 |
+|        190 | Jacket                      | Leather jacket for cold weather                     |  3500.00 |    20 |           3 |
+|        191 | Bedding Set                 | King-sized bedding set for bedroom                  |  3000.00 |    30 |           4 |
+|        192 | Pillow                      | Soft memory foam pillow                             |  1500.00 |   100 |           4 |
+|        193 | Curtains                    | Window curtains with floral designs                 |  1200.00 |   150 |           4 |
+|        194 | Air Conditioner             | Energy-efficient air conditioner                    | 35000.00 |    10 |           4 |
+|        195 | Recliner Chair              | Comfortable recliner for living room                |  8000.00 |    15 |           4 |
+|        196 | Yoga Mat                    | Eco-friendly yoga mat for exercise                  |   800.00 |   120 |           5 |
+|        197 | Resistance Bands            | Resistance bands for home workouts                  |   600.00 |   150 |           5 |
+|        198 | Basketball Shoes            | Specialized shoes for basketball players            |  2500.00 |    60 |           5 |
+|        199 | Tennis Shoes                | Durable tennis shoes for matches                    |  2200.00 |    50 |           5 |
+|        200 | Football Kit                | Complete football kit for players                   |  4000.00 |    40 |           5 |
++------------+-----------------------------+-----------------------------------------------------+----------+-------+-------------+
+95 rows in set (0.00 sec)
+
+mysql> select * from products where category_id != 1 and price is between 1000 and 15000;
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'between 1000 and 15000' at line 1
+mysql> select * from products where category_id != 1 and price between 1000 and 15000;
++------------+------------------+-----------------------------------------------------+----------+-------+-------------+
+| product_id | name             | description                                         | price    | stock | category_id |
++------------+------------------+-----------------------------------------------------+----------+-------+-------------+
+|        105 | Mixer Grinder    | High-power mixer grinder                            |  2500.00 |    80 |           4 |
+|        106 | Football         | NULL                                                |  1000.00 |   100 |           5 |
+|        114 | E-Reader         | Kindle e-reader                                     |  8000.00 |    40 |           2 |
+|        119 | Leather Jacket   | Genuine leather jacket                              |  3500.00 |    30 |           3 |
+|        120 | Running Shoes    | Comfortable running shoes                           |  2000.00 |    70 |           3 |
+|        121 | Jeans            | Denim jeans for casual wear                         |  1200.00 |    80 |           3 |
+|        122 | Sneakers         | Fashionable sneakers for casual wear                |  1800.00 |    50 |           3 |
+|        124 | Blender          | NULL                                                |  3500.00 |    40 |           4 |
+|        125 | Microwave Oven   | Compact microwave oven                              |  5500.00 |    25 |           4 |
+|        127 | Dishwasher       | Automatic dishwasher                                | 15000.00 |    15 |           4 |
+|        128 | Air Fryer        | Low-oil air fryer for healthy cooking               |  8000.00 |    30 |           4 |
+|        129 | Football Shoes   | NULL                                                |  2500.00 |    60 |           5 |
+|        130 | Tennis Racket    | Professional tennis racket                          |  3500.00 |    40 |           5 |
+|        131 | Cricket Bat      | Wooden cricket bat                                  |  1500.00 |   100 |           5 |
+|        132 | Basketball       | NULL                                                |  1200.00 |    80 |           5 |
+|        133 | Dumbbells        | Pair of adjustable dumbbells                        |  2500.00 |    50 |           5 |
+|        137 | Washing Machine  | Fully automatic washing machine                     | 12000.00 |    20 |           4 |
+|        138 | Iron             | Steam iron with ceramic soleplate                   |  1500.00 |    70 |           4 |
+|        139 | Hand Mixer       | Electric hand mixer for baking                      |  1000.00 |    50 |           4 |
+|        140 | Shoes            | Leather formal shoes                                |  2500.00 |    60 |           3 |
+|        141 | Handbag          | Stylish leather handbag                             |  3000.00 |    30 |           3 |
+|        142 | Jacket           | Winter jacket with insulation                       |  4000.00 |    40 |           3 |
+|        144 | Watch            | Analog wristwatch                                   |  1500.00 |    50 |           3 |
+|        145 | Bookshelf        | Wooden bookshelf for home office                    |  3500.00 |    20 |           4 |
+|        146 | Coffee Table     | Stylish coffee table for living room                |  2500.00 |    25 |           4 |
+|        147 | Ceiling Fan      | Energy-efficient ceiling fan                        |  1500.00 |    35 |           4 |
+|        148 | Pressure Cooker  | Stainless steel pressure cooker                     |  1200.00 |    50 |           4 |
+|        149 | Vacuum Cleaner   | Cordless vacuum cleaner for home use                |  5000.00 |    20 |           4 |
+|        150 | Dumbbell Set     | Adjustable dumbbell set with rack                   |  4500.00 |    15 |           5 |
+|        153 | Soccer Ball      | Official size soccer ball                           |  1200.00 |    80 |           5 |
+|        155 | Camping Tent     | 4-person camping tent                               |  7000.00 |    15 |           5 |
+|        160 | Electric Kettle  | Cordless electric kettle                            |  1200.00 |    50 |           4 |
+|        161 | Bread Maker      | Automatic bread maker for home use                  |  5000.00 |    20 |           4 |
+|        162 | Food Processor   | Multi-functional food processor                     |  7000.00 |    25 |           4 |
+|        163 | Hair Dryer       | Professional hair dryer with multiple heat settings |  1500.00 |    50 |           4 |
+|        164 | Tennis Racket    | Lightweight tennis racket for beginners             |  3000.00 |    50 |           5 |
+|        165 | Baseball Bat     | Aluminum baseball bat                               |  2200.00 |    30 |           5 |
+|        166 | Badminton Racket | Carbon fiber badminton racket                       |  1500.00 |    70 |           5 |
+|        168 | Table Tennis Bat | Professional table tennis bat                       |  1500.00 |   100 |           5 |
+|        169 | Gym Bench        | Adjustable gym bench for workouts                   |  4500.00 |    20 |           5 |
+|        181 | E-Book Reader    | E-Book reader with 8GB storage                      |  8000.00 |    40 |           2 |
+|        186 | Sunglasses       | Polarized sunglasses for summer                     |  1500.00 |    70 |           3 |
+|        187 | Winter Jacket    | Warm jacket for winter season                       |  4000.00 |    40 |           3 |
+|        188 | Raincoat         | Waterproof raincoat for rainy season                |  1200.00 |    50 |           3 |
+|        189 | Sneakers         | Comfortable sneakers for casual wear                |  1800.00 |   100 |           3 |
+|        190 | Jacket           | Leather jacket for cold weather                     |  3500.00 |    20 |           3 |
+|        191 | Bedding Set      | King-sized bedding set for bedroom                  |  3000.00 |    30 |           4 |
+|        192 | Pillow           | Soft memory foam pillow                             |  1500.00 |   100 |           4 |
+|        193 | Curtains         | Window curtains with floral designs                 |  1200.00 |   150 |           4 |
+|        195 | Recliner Chair   | Comfortable recliner for living room                |  8000.00 |    15 |           4 |
+|        198 | Basketball Shoes | Specialized shoes for basketball players            |  2500.00 |    60 |           5 |
+|        199 | Tennis Shoes     | Durable tennis shoes for matches                    |  2200.00 |    50 |           5 |
+|        200 | Football Kit     | Complete football kit for players                   |  4000.00 |    40 |           5 |
++------------+------------------+-----------------------------------------------------+----------+-------+-------------+
+53 rows in set (0.00 sec)
+
+mysql> select * from products where category_id != 1 and price not between 1000 and 15000;
++------------+---------------------+--------------------------------------+----------+-------+-------------+
+| product_id | name                | description                          | price    | stock | category_id |
++------------+---------------------+--------------------------------------+----------+-------+-------------+
+|        103 | Fiction Novel       | NULL                                 |   500.00 |     1 |           2 |
+|        104 | T-Shirt             | Cotton t-shirt                       |   300.00 |     5 |           3 |
+|        115 | Cooking Recipe Book | Collection of world cuisines         |   400.00 |   200 |           2 |
+|        116 | Self-Help Book      | Motivational book on personal growth |   350.00 |   150 |           2 |
+|        117 | Fashion Magazine    | Monthly fashion trends magazine      |   150.00 |   300 |           2 |
+|        118 | Sci-Fi Novel        | Science fiction novel                |   250.00 |   120 |           2 |
+|        123 | T-Shirt Pack        | Pack of 3 cotton t-shirts            |   800.00 |   100 |           3 |
+|        126 | Refrigerator        | Double-door refrigerator             | 22000.00 |    10 |           4 |
+|        143 | T-shirt             | Printed graphic t-shirt              |   500.00 |   100 |           3 |
+|        151 | Skipping Rope       | Jump rope for cardio exercise        |   200.00 |   100 |           5 |
+|        152 | Yoga Mat            | Non-slip yoga mat for practice       |   800.00 |    70 |           5 |
+|        154 | Gym Gloves          | Weightlifting gym gloves             |   500.00 |    60 |           5 |
+|        167 | Resistance Bands    | Set of resistance bands for exercise |   800.00 |    50 |           5 |
+|        182 | Cookbook            | Healthy cooking cookbook             |   350.00 |   250 |           2 |
+|        183 | Biographies         | Biography of famous personalities    |   400.00 |   150 |           2 |
+|        184 | Novel               | Romantic novel by a famous author    |   250.00 |   300 |           2 |
+|        185 | History Book        | Book about ancient history           |   500.00 |   200 |           2 |
+|        194 | Air Conditioner     | Energy-efficient air conditioner     | 35000.00 |    10 |           4 |
+|        196 | Yoga Mat            | Eco-friendly yoga mat for exercise   |   800.00 |   120 |           5 |
+|        197 | Resistance Bands    | Resistance bands for home workouts   |   600.00 |   150 |           5 |
++------------+---------------------+--------------------------------------+----------+-------+-------------+
+20 rows in set (0.00 sec)
+
+mysql> select (price + price*0.5) as new_price,price from Products;
++------------+----------+
+| new_price  | price    |
++------------+----------+
+|  22500.000 | 15000.00 |
+|  67500.000 | 45000.00 |
+|    750.000 |   500.00 |
+|    450.000 |   300.00 |
+|   3750.000 |  2500.00 |
+|   1500.000 |  1000.00 |
+|   7500.000 |  5000.00 |
+|   5250.000 |  3500.00 |
+|  18000.000 | 12000.00 |
+|   2250.000 |  1500.00 |
+|  37500.000 | 25000.00 |
+|    450.000 |   300.00 |
+|   1800.000 |  1200.00 |
+|  12000.000 |  8000.00 |
+|    600.000 |   400.00 |
+|    525.000 |   350.00 |
+|    225.000 |   150.00 |
+|    375.000 |   250.00 |
+|   5250.000 |  3500.00 |
+|   3000.000 |  2000.00 |
+|   1800.000 |  1200.00 |
+|   2700.000 |  1800.00 |
+|   1200.000 |   800.00 |
+|   5250.000 |  3500.00 |
+|   8250.000 |  5500.00 |
+|  33000.000 | 22000.00 |
+|  22500.000 | 15000.00 |
+|  12000.000 |  8000.00 |
+|   3750.000 |  2500.00 |
+|   5250.000 |  3500.00 |
+|   2250.000 |  1500.00 |
+|   1800.000 |  1200.00 |
+|   3750.000 |  2500.00 |
+|  37500.000 | 25000.00 |
+| 112500.000 | 75000.00 |
+|   6000.000 |  4000.00 |
+|  18000.000 | 12000.00 |
+|   2250.000 |  1500.00 |
+|   1500.000 |  1000.00 |
+|   3750.000 |  2500.00 |
+|   4500.000 |  3000.00 |
+|   6000.000 |  4000.00 |
+|    750.000 |   500.00 |
+|   2250.000 |  1500.00 |
+|   5250.000 |  3500.00 |
+|   3750.000 |  2500.00 |
+|   2250.000 |  1500.00 |
+|   1800.000 |  1200.00 |
+|   7500.000 |  5000.00 |
+|   6750.000 |  4500.00 |
+|    300.000 |   200.00 |
+|   1200.000 |   800.00 |
+|   1800.000 |  1200.00 |
+|    750.000 |   500.00 |
+|  10500.000 |  7000.00 |
+|    525.000 |   350.00 |
+|   2700.000 |  1800.00 |
+|   1800.000 |  1200.00 |
+|  67500.000 | 45000.00 |
+|   1800.000 |  1200.00 |
+|   7500.000 |  5000.00 |
+|  10500.000 |  7000.00 |
+|   2250.000 |  1500.00 |
+|   4500.000 |  3000.00 |
+|   3300.000 |  2200.00 |
+|   2250.000 |  1500.00 |
+|   1200.000 |   800.00 |
+|   2250.000 |  1500.00 |
+|   6750.000 |  4500.00 |
+|    450.000 |   300.00 |
+|    300.000 |   200.00 |
+|  37500.000 | 25000.00 |
+|  22500.000 | 15000.00 |
+|   1200.000 |   800.00 |
+|    900.000 |   600.00 |
+|   1800.000 |  1200.00 |
+|    225.000 |   150.00 |
+|   1050.000 |   700.00 |
+|    600.000 |   400.00 |
+|   7500.000 |  5000.00 |
+|  12000.000 |  8000.00 |
+|    525.000 |   350.00 |
+|    600.000 |   400.00 |
+|    375.000 |   250.00 |
+|    750.000 |   500.00 |
+|   2250.000 |  1500.00 |
+|   6000.000 |  4000.00 |
+|   1800.000 |  1200.00 |
+|   2700.000 |  1800.00 |
+|   5250.000 |  3500.00 |
+|   4500.000 |  3000.00 |
+|   2250.000 |  1500.00 |
+|   1800.000 |  1200.00 |
+|  52500.000 | 35000.00 |
+|  12000.000 |  8000.00 |
+|   1200.000 |   800.00 |
+|    900.000 |   600.00 |
+|   3750.000 |  2500.00 |
+|   3300.000 |  2200.00 |
+|   6000.000 |  4000.00 |
++------------+----------+
+100 rows in set (0.00 sec)
+
+mysql> select * from customers
+    -> where city in ('Delhi','Mumbai','Chennai')
+    -> ;
++-------------+-----------+--------+---------+-------------+
+| customer_id | name      | phn_no | city    | state       |
++-------------+-----------+--------+---------+-------------+
+|           1 | Rahul     |    210 | Mumbai  | Maharashtra |
+|           2 | Mira      |    211 | Delhi   | Delhi       |
+|           4 | Amit      |    213 | Chennai | Tamil Nadu  |
+|          11 | Rajesh    |    220 | Mumbai  | Maharashtra |
+|          12 | Seema     |    221 | Delhi   | Delhi       |
+|          14 | Anjali    |    223 | Chennai | Tamil Nadu  |
+|          21 | Harsh     |    230 | Mumbai  | Maharashtra |
+|          22 | Neha      |    231 | Delhi   | Delhi       |
+|          24 | Amit      |    233 | Chennai | Tamil Nadu  |
+|          31 | Krishna   |    240 | Mumbai  | Maharashtra |
+|          32 | Kriti     |    241 | Delhi   | Delhi       |
+|          34 | Pooja     |    243 | Chennai | Tamil Nadu  |
+|          41 | Suresh    |    250 | Mumbai  | Maharashtra |
+|          42 | Kavya     |    251 | Delhi   | Delhi       |
+|          44 | Komal     |    253 | Chennai | Tamil Nadu  |
+|          51 | Ravi      |    260 | Mumbai  | Maharashtra |
+|          52 | Priyanka  |    261 | Delhi   | Delhi       |
+|          54 | Tanvi     |    263 | Chennai | Tamil Nadu  |
+|          61 | Devendra  |    270 | Mumbai  | Maharashtra |
+|          62 | Ankita    |    271 | Delhi   | Delhi       |
+|          64 | Sonal     |    273 | Chennai | Tamil Nadu  |
+|          71 | Vinay     |    280 | Mumbai  | Maharashtra |
+|          72 | Shivendra |    281 | Delhi   | Delhi       |
+|          74 | Tushar    |    283 | Chennai | Tamil Nadu  |
+|          81 | Sumit     |    290 | Mumbai  | Maharashtra |
+|          82 | Harshita  |    291 | Delhi   | Delhi       |
+|          84 | Pranav    |    293 | Chennai | Tamil Nadu  |
+|          91 | Vikash    |    300 | Mumbai  | Maharashtra |
+|          92 | Ashu      |    301 | Delhi   | Delhi       |
+|          94 | Basant    |    303 | Chennai | Tamil Nadu  |
++-------------+-----------+--------+---------+-------------+
+30 rows in set (0.00 sec)
+
+mysql> 

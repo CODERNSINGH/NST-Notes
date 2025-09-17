@@ -1,0 +1,182 @@
+Last login: Mon Aug 25 12:42:51 on ttys004
+(base) Narendra@Narendra-Singh-Macbook update-nstBuddy % ls
+dist			package-lock.json	src
+eslint.config.js	package.json		vite.config.js
+index.html		public
+node_modules		README.md
+(base) Narendra@Narendra-Singh-Macbook update-nstBuddy % code .
+(base) Narendra@Narendra-Singh-Macbook update-nstBuddy % cd ~
+(base) Narendra@Narendra-Singh-Macbook ~ % mysql     
+ERROR 2002 (HY000): Can't connect to local MySQL server through socket '/tmp/mysql.sock' (2)
+(base) Narendra@Narendra-Singh-Macbook ~ % mysql root
+ERROR 2002 (HY000): Can't connect to local MySQL server through socket '/tmp/mysql.sock' (2)
+(base) Narendra@Narendra-Singh-Macbook ~ % mysql root -p
+Enter password: 
+ERROR 2002 (HY000): Can't connect to local MySQL server through socket '/tmp/mysql.sock' (2)
+(base) Narendra@Narendra-Singh-Macbook ~ % mysql -u root -p
+Enter password: 
+ERROR 2002 (HY000): Can't connect to local MySQL server through socket '/tmp/mysql.sock' (2)
+(base) Narendra@Narendra-Singh-Macbook ~ % admin@420969
+zsh: command not found: admin@420969
+(base) Narendra@Narendra-Singh-Macbook ~ % mysql -u root -p
+Enter password: 
+ERROR 2002 (HY000): Can't connect to local MySQL server through socket '/tmp/mysql.sock' (2)
+(base) Narendra@Narendra-Singh-Macbook ~ % mysql -u root -p
+Enter password: 
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 9
+Server version: 9.4.0 MySQL Community Server - GPL
+
+Copyright (c) 2000, 2024, Oracle and/or its affiliates.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql> clear
+mysql> show databases;
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| mysql              |
+| NewtonMart         |
+| nsingh             |
+| performance_schema |
+| sys                |
++--------------------+
+6 rows in set (0.01 sec)
+
+mysql> use NewtonMart
+Reading table information for completion of table and column names
+You can turn off this feature to get a quicker startup with -A
+
+Database changed
+mysql> show tables;
++----------------------+
+| Tables_in_newtonmart |
++----------------------+
+| Cafe                 |
+| Customer             |
+| Employee             |
+| Students             |
++----------------------+
+4 rows in set (0.00 sec)
+
+mysql> describe Customer;
++--------------+--------------+------+-----+---------+-------+
+| Field        | Type         | Null | Key | Default | Extra |
++--------------+--------------+------+-----+---------+-------+
+| custormer_id | int          | YES  |     | NULL    |       |
+| name         | varchar(50)  | YES  |     | NULL    |       |
+| email        | varchar(100) | YES  |     | NULL    |       |
+| price        | float        | YES  |     | NULL    |       |
++--------------+--------------+------+-----+---------+-------+
+4 rows in set (0.00 sec)
+
+mysql> select * from Customer;
+Empty set (0.00 sec)
+
+mysql> select * from Cafe;
++-------------+-----------+----------------+----------------+
+| Customer_id | Item_name | Customer_Name  | Billing_Amount |
++-------------+-----------+----------------+----------------+
+|     2232202 | Tea       | Jitesh Singh   |             90 |
+|     2263202 | Maggie    | Student Singh  |            150 |
+|     2265702 | Maggie    | Rana Singh     |            150 |
+|     9238402 | Coffie    | Narendar Singh |           9000 |
++-------------+-----------+----------------+----------------+
+4 rows in set (0.00 sec)
+
+mysql> select Item_name,Customer_Name from Cafe;
++-----------+----------------+
+| Item_name | Customer_Name  |
++-----------+----------------+
+| Tea       | Jitesh Singh   |
+| Maggie    | Student Singh  |
+| Maggie    | Rana Singh     |
+| Coffie    | Narendar Singh |
++-----------+----------------+
+4 rows in set (0.00 sec)
+
+mysql> select Name_Dish as  Item_name,Customer_Name from Cafe;
+ERROR 1054 (42S22): Unknown column 'Name_Dish' in 'field list'
+mysql> select Item_name as Dish_Name,Customer_Name from Cafe;
++-----------+----------------+
+| Dish_Name | Customer_Name  |
++-----------+----------------+
+| Tea       | Jitesh Singh   |
+| Maggie    | Student Singh  |
+| Maggie    | Rana Singh     |
+| Coffie    | Narendar Singh |
++-----------+----------------+
+4 rows in set (0.00 sec)
+
+mysql> create table Customers(
+    -> Name varchar(100),
+    -> email varchar(100),
+    -> phone varchar(20)
+    -> ,
+    -> address varchar(100),
+    -> city varchar(100),
+    -> zip_code int,
+    -> );
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near ')' at line 9
+mysql> create table Customers( Name varchar(100), email varchar(100), phone varchar(20) , address varchar(100), city varchar(100), zip_code int );
+Query OK, 0 rows affected (0.01 sec)
+
+mysql> show tables;
++----------------------+
+| Tables_in_newtonmart |
++----------------------+
+| Cafe                 |
+| Customer             |
+| Customers            |
+| Employee             |
+| Students             |
++----------------------+
+5 rows in set (0.00 sec)
+
+mysql> describe Customers;
++----------+--------------+------+-----+---------+-------+
+| Field    | Type         | Null | Key | Default | Extra |
++----------+--------------+------+-----+---------+-------+
+| Name     | varchar(100) | YES  |     | NULL    |       |
+| email    | varchar(100) | YES  |     | NULL    |       |
+| phone    | varchar(20)  | YES  |     | NULL    |       |
+| address  | varchar(100) | YES  |     | NULL    |       |
+| city     | varchar(100) | YES  |     | NULL    |       |
+| zip_code | int          | YES  |     | NULL    |       |
++----------+--------------+------+-----+---------+-------+
+6 rows in set (0.00 sec)
+
+mysql> select * from Cafe;
++-------------+-----------+----------------+----------------+
+| Customer_id | Item_name | Customer_Name  | Billing_Amount |
++-------------+-----------+----------------+----------------+
+|     2232202 | Tea       | Jitesh Singh   |             90 |
+|     2263202 | Maggie    | Student Singh  |            150 |
+|     2265702 | Maggie    | Rana Singh     |            150 |
+|     9238402 | Coffie    | Narendar Singh |           9000 |
++-------------+-----------+----------------+----------------+
+4 rows in set (0.00 sec)
+
+mysql> update Cafe set Billing_Amount = 90 where Billing_Amount = 9000
+    -> ;
+Query OK, 1 row affected (0.00 sec)
+Rows matched: 1  Changed: 1  Warnings: 0
+
+mysql> select * from Cafe;
++-------------+-----------+----------------+----------------+
+| Customer_id | Item_name | Customer_Name  | Billing_Amount |
++-------------+-----------+----------------+----------------+
+|     2232202 | Tea       | Jitesh Singh   |             90 |
+|     2263202 | Maggie    | Student Singh  |            150 |
+|     2265702 | Maggie    | Rana Singh     |            150 |
+|     9238402 | Coffie    | Narendar Singh |             90 |
++-------------+-----------+----------------+----------------+
+4 rows in set (0.00 sec)
+
+mysql> 

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mini Gemini Chatbot</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 50px; }
+    #chatbox { width: 70%; padding: 10px; }
+    #sendBtn { padding: 10px 20px; margin-left: 10px; }
+    #answer { margin-top: 20px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>Mini Gemini Chatbot</h1>
+  <input type="text" id="chatbox" placeholder="Ask me anything..." />
+  <button id="sendBtn">Send</button>
+  <div id="answer"></div>
+
+  <script>
+    const chatbox = document.getElementById("chatbox");
+    const sendBtn = document.getElementById("sendBtn");
+    const answerDiv = document.getElementById("answer");
+
+    sendBtn.addEventListener("click", async () => {
+      const query = chatbox.value.trim();
+      if (!query) return;
+
+      answerDiv.textContent = "Thinking...";
+
+      try {
+        const res = await fetch("https://youqcsd66ps9.edison-server.newtonschool.co/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query })
+        });
+        const data = await res.json();
+        console.log(data)
+        answerDiv.textContent = data.answer;
+      } catch (error) {
+        console.error(error);
+        answerDiv.textContent = "Error contacting chatbot API.";
+      }
+    });
+  </script>
+</body>
+</html>
