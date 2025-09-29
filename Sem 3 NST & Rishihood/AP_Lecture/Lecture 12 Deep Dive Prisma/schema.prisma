@@ -1,0 +1,64 @@
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+
+// model User {
+//   id        Int      @id @default(autoincrement())
+//   name      String
+//   email     String   @unique
+//   posts     Post[]
+//   createdAt DateTime @default(now())
+// }
+
+// model Post {
+//   id        Int      @id @default(autoincrement())
+//   title     String
+//   content   String?
+//   published Boolean  @default(false)
+//   author    User     @relation(fields: [authorId], references: [id])
+//   authorId  Int
+// }
+
+// model comment {
+//   id  Int @id
+//   name String
+//   comment String
+// }
+
+enum AlignmentSelect {
+  EVIL
+  VILLIAN
+}
+
+model Hero {
+  id             Int              @id @default(autoincrement())
+  name           String
+  secretIdentity String?          // can be null
+  alignment      AlignmentSelect
+  hometownId     Int
+  hometown       City             @relation(fields: [hometownId], references: [id])
+  powers         Power[]          @relation("HeroPowers")
+}
+
+model Power {
+  id          Int     @id @default(autoincrement())
+  name        String  @unique
+  description String
+  heros       Hero[]  @relation("HeroPowers")
+}
+
+model City {
+  id       Int     @id @default(autoincrement())
+  name     String  @unique
+  population Int
+  heros    Hero[]  // One-to-many (no custom relation name needed here)
+}
+
+

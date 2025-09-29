@@ -42,4 +42,22 @@ app.post("/auth", async (req, res) => {
   }
 });
 
+
+app.post("/login", async (req, res) => {
+
+
+  try {
+
+    const {user,email} = req.body
+    const data = await prisma.user.findUnique({
+      where: {email : email}
+    });
+    console.log(data, "User Exist");
+    res.status(200).json(data);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: `User Doe't Exist ${err}` });
+  }
+});
+
 app.listen(3000, () => console.log("Server running at http://localhost:3000"));

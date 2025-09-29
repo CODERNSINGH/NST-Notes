@@ -1,0 +1,2 @@
+-- AddForeignKey
+ALTER TABLE `Hero` ADD CONSTRAINT `Hero_hometownId_fkey` FOREIGN KEY (`hometownId`) REFERENCES `City`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
