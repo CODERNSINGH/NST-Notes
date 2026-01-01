@@ -1,0 +1,33 @@
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model PhonepeAccount{
+  account_id Int @id @default(autoincrement())
+  name String
+  phone String @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  bankaccount Bankaccount?
+  transaction Transection []
+}
+model Bankaccount{
+  accountNumber String @unique
+  phoneId Int @unique
+  user PhonepeAccount @relation(fields: [phoneId], references: [account_id])
+}
+
+model Transection{
+  transection Int @id @default(autoincrement())
+  transectionAmount String?
+  type String? @default("Pending")
+  userId Int
+  user PhonepeAccount @relation(fields: [userId],references: [account_id])
+
+}
