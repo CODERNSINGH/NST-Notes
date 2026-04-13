@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crazy Cool AI Chatbot</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>🤖 Crazy Cool Dream Hallucinator Chatbot 🚀</h1>
+        <p>Welcome to the wild world of AI hallucinations! Chat with the TinyLlama and see what crazy responses you get. 🌈✨</p>
+        <div id="chat-box" class="chat-box">
+            <div class="message bot">Hello! I'm your AI chatbot. Ask me anything! 😊</div>
+        </div>
+        <div class="input-container">
+            <input type="text" id="user-input" placeholder="Type your message here...">
+            <button id="send-btn">Send</button>
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
