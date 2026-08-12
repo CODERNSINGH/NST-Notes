@@ -1,0 +1,422 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{amsmath}
+
+\definecolor{rapidoYellow}{HTML}{FFD700}
+\definecolor{darkbg}{HTML}{1A1A2E}
+\definecolor{accentBlue}{HTML}{0F3460}
+
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{DVA Capstone 2 --- SectionA G1}
+\lhead{Rapido Ride Analysis}
+\cfoot{\thepage}
+
+\title{\textbf{\Huge Rapido Ride Analysis}\\[0.5em]
+\large Understanding Demand, Cancellations \& Revenue in Bangalore\\[0.3em]
+\normalsize NST DVA Capstone 2 $\cdot$ Section A $\cdot$ Group 1}
+\author{Aniket Pathak $\cdot$ Nipun Patlori $\cdot$ Saswataduity Bhuin $\cdot$ Akshay Y\\
+Narendra Singh $\cdot$ Sayan Bhattacharya $\cdot$ Vedant Madne}
+\date{April 29, 2026}
+
+\begin{document}
+\maketitle
+\tableofcontents
+\newpage
+
+%% ============================================================
+\section{Project Overview}
+%% ============================================================
+
+\subsection{Business Problem}
+Ride-hailing platforms like Rapido face a persistent challenge: balancing rider demand with driver supply across different service types and time windows. High cancellation rates erode customer trust, reduce revenue, and signal inefficiencies in resource allocation.
+
+\textbf{Core Business Question:}\\
+\textit{How do service type, time of day, and location influence ride cancellation rates and revenue --- and where should Rapido focus driver allocation to minimise cancellations during peak demand?}
+
+\subsection{Dataset at a Glance}
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+\textbf{Attribute} & \textbf{Value} \\
+\midrule
+Source & Bangalore Rapido Ride Data (Kaggle, simulated) \\
+Raw Rows & 51,000 \\
+Cleaned Rows & 49,801 \\
+Raw Columns & 13 \\
+Cleaned Columns & 30 \\
+Time Period & April 10 -- April 29, 2024 \\
+Format & CSV \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+%% ============================================================
+\section{Pipeline: From Raw to Clean (ETL)}
+%% ============================================================
+
+The entire pipeline runs across five Jupyter notebooks.
+
+\subsection{Notebook 01 --- Extraction}
+\begin{itemize}
+  \item Loaded \texttt{rapido\_rides.csv} (51,000 rows, 13 columns) with \texttt{pd.read\_csv()}.
+  \item Ran \texttt{df.info()} and \texttt{df.describe()} to inspect dtypes, ranges, and nulls.
+  \item Identified the 13 raw columns: \texttt{services, date, time, ride\_status, source, destination, duration, ride\_id, distance, ride\_charge, misc\_charge, total\_fare, payment\_method}.
+  \item Initial null audit showed \textbf{10,346 nulls} in \texttt{ride\_charge}, \texttt{misc\_charge}, \texttt{total\_fare} and \textbf{12,398 nulls} in \texttt{payment\_method}.
+\end{itemize}
+
+\subsection{Notebook 02 --- Cleaning \& Feature Engineering}
+
+\subsubsection{Step 1: Handling Missing Values (Business-Logic Driven)}
+The 10,346 missing fare rows corresponded to \textbf{cancelled rides} --- rides that were booked but never completed, so they naturally have no fare. We did \textbf{NOT} drop them.
+
+\begin{itemize}
+  \item Set \texttt{ride\_charge}, \texttt{misc\_charge}, \texttt{total\_fare} $\leftarrow 0$ for cancelled rides.
+  \item Set \texttt{payment\_method} $\leftarrow$ \texttt{"not\_applicable"} for cancelled rides.
+  \item Recalculated \texttt{total\_fare = ride\_charge + misc\_charge} for completed rides to fix any inconsistencies.
+\end{itemize}
+
+\textbf{Key interview point:} We chose business-logic imputation over mean/median imputation because a cancelled ride genuinely has zero fare --- filling with an average would pollute revenue KPIs.
+
+\subsubsection{Step 2: Datetime Conversion}
+\begin{itemize}
+  \item \texttt{date} column converted from \texttt{object} $\rightarrow$ \texttt{datetime64}.
+  \item Combined \texttt{date} + \texttt{time} strings into a new \texttt{timestamp} column for time-series analysis.
+\end{itemize}
+
+\subsubsection{Step 3: Duplicate Removal}
+\begin{itemize}
+  \item Deduplicated on \texttt{ride\_id}, keeping the first occurrence.
+  \item Dropped 1,199 duplicate records.
+\end{itemize}
+
+\subsubsection{Step 4: Categorical Standardisation}
+\begin{itemize}
+  \item All text columns lowercased and stripped of whitespace.
+  \item Service names normalised: \texttt{"bike lite"} $\rightarrow$ \texttt{bike\_lite}, \texttt{"cab economy"} $\rightarrow$ \texttt{cab\_economy}.
+\end{itemize}
+
+\subsubsection{Step 5: Anomaly Filtering}
+Dropped completed rides where:
+\begin{itemize}
+  \item \texttt{distance > 100 km} (physically implausible in Bangalore city)
+  \item \texttt{distance $\leq$ 0 km}
+  \item \texttt{duration $\leq$ 0 min}
+\end{itemize}
+
+\subsubsection{Step 6: Feature Engineering (17 New Columns)}
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+\textbf{Column} & \textbf{Formula / Logic} & \textbf{Purpose} \\
+\midrule
+\texttt{year} & \texttt{date.dt.year} & Temporal filter \\
+\texttt{month} & \texttt{date.dt.month} & Seasonal trends \\
+\texttt{hour} & \texttt{timestamp.dt.hour} & Hourly demand \\
+\texttt{day\_of\_week} & \texttt{timestamp.dt.day\_name()} & Weekly patterns \\
+\texttt{is\_weekend} & 1 if Sat/Sun, else 0 & Weekend vs weekday \\
+\texttt{peak\_hour} & 1 if hour $\in$ [8,9,10,17,18,19] & Peak flagging \\
+\texttt{completed} & 1 if completed, 0 if cancelled & Binary target \\
+\texttt{avg\_speed\_kmh} & distance / (duration/60) & Operational efficiency \\
+\texttt{fare\_per\_km} & total\_fare / distance & Unit economics \\
+\texttt{source\_cancel\_rate} & avg cancel rate per pickup zone & Geographic reliability \\
+\texttt{demand\_intensity} & Z-score of volume per source-hour & Supply pressure \\
+\texttt{demand\_zone} & low / medium / high demand label & Zone segmentation \\
+\texttt{distance\_category} & short / medium / long & Ride length segment \\
+\texttt{fare\_category} & budget / standard / premium / cancelled & Revenue segment \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+%% ============================================================
+\section{KPI Framework}
+%% ============================================================
+
+\begin{center}
+\begin{tabular}{llll}
+\toprule
+\textbf{KPI} & \textbf{Value} & \textbf{Formula} & \textbf{Insight} \\
+\midrule
+Cancellation Rate & \textbf{10.40\%} & 5,180 / 49,801 & 1 in 10 rides cancelled \\
+Total Revenue & \textbf{Rs.68,37,929} & Sum of \texttt{total\_fare} & Completed rides only \\
+Avg Revenue/Ride & \textbf{Rs.153.24} & Revenue / completed & Baseline fare benchmark \\
+Peak Cancel Rate & \textbf{13.22\%} & 1,653 / 12,503 & 40\% higher than off-peak \\
+Off-Peak Cancel Rate & \textbf{9.46\%} & 3,527 / 37,298 & Baseline comparison \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+%% ============================================================
+\section{Exploratory Data Analysis (EDA)}
+%% ============================================================
+
+\subsection{Service Type Analysis}
+\begin{center}
+\begin{tabular}{lrrrrr}
+\toprule
+\textbf{Service} & \textbf{Rides} & \textbf{Cancelled} & \textbf{Cancel \%} & \textbf{Revenue (Rs.)} & \textbf{Avg Fare} \\
+\midrule
+auto & 11,474 & 1,180 & 10.28\% & 19,36,736 & 188.14 \\
+bike & 17,492 & 1,813 & 10.36\% & 13,02,960 & 83.10 \\
+bike\_lite & 4,541 & 452 & 9.95\% & 2,32,899 & 56.96 \\
+cab\_economy & 9,370 & 1,006 & 10.74\% & 26,98,620 & 322.65 \\
+parcel & 6,924 & 729 & 10.53\% & 6,66,713 & 107.62 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Key insight:} \texttt{cab\_economy} has the highest cancellation rate (10.74\%) and highest average fare (Rs.322.65) --- premium rides are most at risk. \texttt{bike\_lite} is the most reliable service.
+
+\subsection{Peak vs Off-Peak Analysis}
+\begin{center}
+\begin{tabular}{lrrrr}
+\toprule
+\textbf{Window} & \textbf{Rides} & \textbf{Cancelled} & \textbf{Cancel Rate} \\
+\midrule
+Off-Peak & 37,298 & 3,527 & 9.46\% \\
+Peak (8-10 AM, 5-7 PM) & 12,503 & 1,653 & \textbf{13.22\%} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Peak hours see \textbf{39.7\% more cancellations} than off-peak. The 5 PM -- 7 PM evening slot is the worst at \textbf{14.14\%} cancellation rate.
+
+\subsection{Hour-wise Cancellation Heatmap (Key Hours)}
+\begin{center}
+\begin{tabular}{lrl}
+\toprule
+\textbf{Hour} & \textbf{Cancel Rate} & \textbf{Interpretation} \\
+\midrule
+5 AM & 12.84\% & Late-night stragglers, low driver availability \\
+8 AM & 13.67\% & Morning office rush begins \\
+10 AM & 13.24\% & Peak tail \\
+17 (5 PM) & 14.14\% & \textbf{Worst hour of day} --- evening rush \\
+18 (6 PM) & 12.62\% & Evening peak continues \\
+12 PM & 7.07\% & Midday lull, best completion \\
+14 (2 PM) & 7.00\% & Lowest cancellation of day \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Geographic Analysis}
+\begin{itemize}
+  \item \textbf{Top Revenue Zone:} Koramangala --- Rs.2,73,504 (4\% of total revenue from one zone).
+  \item Koramangala also has 1,957 rides with a 10.17\% cancellation rate.
+  \item The zone naming inconsistency (\texttt{koramangala} vs \texttt{kormangala}) was detected during EDA and standardised.
+\end{itemize}
+
+\subsection{Demand Zone Distribution}
+\begin{center}
+\begin{tabular}{lr}
+\toprule
+\textbf{Demand Zone} & \textbf{Ride Count} \\
+\midrule
+High Demand & 17,354 \\
+Medium Demand & 17,590 \\
+Low Demand & 14,857 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Efficiency Metrics (Completed Rides)}
+\begin{center}
+\begin{tabular}{lrrrrr}
+\toprule
+\textbf{Metric} & \textbf{Mean} & \textbf{Median} & \textbf{Min} & \textbf{Max} \\
+\midrule
+Distance (km) & 6.99 & 5.48 & 0.8 & 45.0 \\
+Duration (min) & 24.09 & 19.0 & 5 & 120 \\
+Avg Speed (km/h) & 18.31 & 17.69 & 2.07 & 73.1 \\
+Fare per km (Rs.) & 20.94 & 19.85 & 0 & 110.18 \\
+Total Fare (Rs.) & 137.31 & 93.84 & 0 & 1,301.58 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Service Efficiency Comparison}
+\begin{center}
+\begin{tabular}{lrrrr}
+\toprule
+\textbf{Service} & \textbf{Avg Fare/km} & \textbf{Avg Speed (km/h)} & \textbf{Avg Fare (Rs.)} \\
+\midrule
+cab\_economy & Rs.33.77 & 19.59 & 322.65 \\
+auto & Rs.28.47 & 18.75 & 188.14 \\
+parcel & Rs.20.56 & 17.93 & 107.62 \\
+bike & Rs.17.76 & 17.89 & 83.10 \\
+bike\_lite & Rs.15.05 & 17.46 & 56.96 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Payment Method Distribution}
+\begin{center}
+\begin{tabular}{lr}
+\toprule
+\textbf{Payment Method} & \textbf{Count} \\
+\midrule
+Paytm & 11,208 \\
+QR Scan & 11,186 \\
+GPay & 11,147 \\
+Amazon Pay & 11,080 \\
+Not Applicable (cancelled) & 5,180 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Note:} Payment methods are nearly uniformly distributed across all four UPI providers --- no single provider dominates.
+
+%% ============================================================
+\section{Statistical Analysis}
+%% ============================================================
+
+\subsection{Test 1: Chi-Square --- Service Type vs Cancellation}
+\begin{itemize}
+  \item \textbf{Null Hypothesis:} Service type and cancellation are independent.
+  \item \textbf{Result:} $\chi^2 = 2.42$, $p = 0.659$, $df = 4$
+  \item \textbf{Conclusion:} \textbf{Fail to reject $H_0$}. No statistically significant difference in cancellation rates across services. All services cancel at approximately the same rate ($\sim$10.4\%).
+\end{itemize}
+
+\subsection{Test 2: T-Test --- Peak vs Off-Peak Cancellations}
+\begin{itemize}
+  \item \textbf{Null Hypothesis:} Peak and off-peak cancellation rates are equal.
+  \item \textbf{Result:} $t = -11.95$, $p < 0.0001$ (statistically significant)
+  \item \textbf{Conclusion:} \textbf{Reject $H_0$}. Peak hours have a \textbf{significantly higher} cancellation rate (13.22\% vs 9.46\%). The time-of-day effect is real and not due to chance.
+\end{itemize}
+
+\subsection{Test 3: Correlation --- Demand Intensity vs Cancellation}
+\begin{itemize}
+  \item Pearson correlation between \texttt{demand\_intensity} (z-score of volume) and cancellation: $r = -0.0134$
+  \item \textbf{Interpretation:} Very weak correlation. High demand alone does not predict cancellation. Other factors (driver supply, time of day) are more important drivers.
+\end{itemize}
+
+\subsection{Revenue Leakage Simulation}
+\begin{itemize}
+  \item Average completed ride fare: Rs.153.24
+  \item If cancellations in top revenue zones are reduced by 10\%:
+  \item \textbf{Potential monthly recovery} $\approx$ Rs.1,20,000 (extrapolated from 20-day dataset)
+\end{itemize}
+
+%% ============================================================
+\section{Charts \& Visualisations}
+%% ============================================================
+
+All charts were created using \textbf{Python (matplotlib / seaborn)} in \texttt{03\_EDA.ipynb} and \texttt{04\_statistical\_analysis.ipynb}, and published as an interactive \textbf{Tableau Dashboard}.
+
+\subsection{Chart List}
+\begin{enumerate}
+  \item \textbf{Bar Chart --- Rides by Service Type:} bike leads with 17,492 rides; bike\_lite is smallest with 4,541.
+  \item \textbf{Stacked Bar --- Cancellation by Service:} Shows completed vs cancelled split per service. All services cluster near 10\%.
+  \item \textbf{Line Chart --- Hourly Cancellation Rate:} Clear spikes at 8 AM (13.67\%) and 5 PM (14.14\%). Troughs at 12--14 PM.
+  \item \textbf{Heatmap --- Service $\times$ Peak Hour Cancellation:} 5x2 grid showing peak vs off-peak rates per service. cab\_economy peak = 13.12\%.
+  \item \textbf{Box Plot --- Fare Distribution by Service:} cab\_economy has highest spread (Rs.0--1301). bike\_lite is tightest.
+  \item \textbf{Scatter Plot --- Distance vs Fare:} Positive correlation, with cab\_economy having steepest fare-per-km slope.
+  \item \textbf{Bar Chart --- Revenue by Service:} cab\_economy = Rs.26.9L despite fewer rides; bike = Rs.13L with most rides.
+  \item \textbf{Map / Geographic Chart (Tableau):} Cancellation hotspots by pickup zone overlaid on Bangalore map.
+  \item \textbf{Histogram --- Fare Distribution:} Right-skewed distribution; most rides between Rs.50--200.
+  \item \textbf{Day-of-Week Chart:} Tuesday has highest cancellation rate (11.19\%); Wednesday is most reliable (9.60\%).
+\end{enumerate}
+
+\subsection{Tableau Dashboard}
+Two dashboard views were published:
+\begin{itemize}
+  \item \textbf{Executive View:} Cancellation rates by service, peak vs off-peak summary, top revenue zones.
+  \item \textbf{Operational View:} Ride volume by hour, cancellation heatmap, fare distribution by service.
+\end{itemize}
+
+%% ============================================================
+\section{Key Business Insights}
+%% ============================================================
+
+\begin{enumerate}
+  \item \textbf{Peak Hour is the Primary Risk Factor:} Cancellation spikes 39.7\% during morning (8--10 AM) and evening (5--7 PM) peaks. Time of day, not service type, is the dominant driver.
+  \item \textbf{Service Type Doesn't Matter for Cancellation:} Chi-square test confirms all services cancel at the same rate. Operational improvements must focus on time/location, not service segmentation.
+  \item \textbf{cab\_economy is the Highest Revenue Risk:} It earns the most per ride (Rs.322.65 avg) and has the highest cancellation rate (10.74\%). Every lost cab ride costs 4x more than a lost bike ride.
+  \item \textbf{bike and bike\_lite are the Most Resilient:} During peak hours, bikes maintain relatively low cancellation and high volume. They can serve as overflow capacity.
+  \item \textbf{Koramangala is the Critical Zone:} 4\% of total revenue from one zone. This zone must be prioritised for driver incentives during peak hours.
+  \item \textbf{Midday (12--3 PM) is the Efficiency Window:} Lowest cancellation rates (7.0--7.5\%), ideal time for driver training or scheduled maintenance.
+  \item \textbf{Revenue Concentration:} Top 5 zones contribute disproportionate revenue --- geographic concentration is a risk factor if driver supply isn't maintained there.
+  \item \textbf{Payment is Neutral:} No UPI provider dominates, suggesting users have no strong payment preference. Not a lever for intervention.
+\end{enumerate}
+
+%% ============================================================
+\section{Business Recommendations}
+%% ============================================================
+
+\begin{enumerate}
+  \item \textbf{Peak-Hour Driver Surge Incentives:} Offer bonus payouts to drivers who are active between 8--10 AM and 5--7 PM. Target Koramangala and HSR Layout first. Expected impact: reduce peak cancellation from 13.22\% to $\sim$10\%.
+
+  \item \textbf{Zone-Based Driver Pre-positioning:} Use demand zone data to pre-position drivers in high-demand zones 15 minutes before peak hours begin. Implement via the driver app as shift recommendations.
+
+  \item \textbf{cab\_economy Supply Boost:} Since cab rides are highest revenue but most vulnerable, create a dedicated cab driver pool for peak hours in top-5 revenue zones.
+
+  \item \textbf{Bike as Peak Overflow:} During extreme demand, surface bike/auto alternatives faster in the UI when cabs are unavailable. Reduces user frustration and captures revenue that would otherwise be lost.
+
+  \item \textbf{Real-Time Cancellation Monitoring:} Deploy a live dashboard (like our Tableau view) for the ops team to track hourly cancellation rates and trigger driver incentives dynamically.
+\end{enumerate}
+
+%% ============================================================
+\section{Tech Stack \& Team Roles}
+%% ============================================================
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+\textbf{Tool} & \textbf{Purpose} \\
+\midrule
+Python & ETL, Cleaning, EDA, Statistical Analysis \\
+Pandas & Data manipulation and transformation \\
+SciPy & Statistical tests (chi-square, t-test) \\
+Matplotlib / Seaborn & Chart generation \\
+Tableau Public & Interactive dashboard \\
+GitHub & Version control, collaboration \\
+Jupyter Notebooks & Development environment \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+\textbf{Name} & \textbf{Role} & \textbf{Primary Contribution} \\
+\midrule
+Aniket Pathak & Project Lead & Problem framing, ETL oversight \\
+Nipun Patlori & Data Lead & EDA, cleaning pipeline \\
+Saswataduity Bhuin & ETL Lead & Tableau dashboard \\
+Akshay Y & Analysis Lead & Statistical analysis \\
+Narendra Singh & Visualization Lead & Tableau + PPT \\
+Sayan Bhattacharya & Strategy Lead & Recommendations \\
+Vedant Madne & PPT \& Quality Lead & Presentation quality \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+%% ============================================================
+\section{Quick Revision Cheat Sheet}
+%% ============================================================
+
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Raw data:} 51,000 rows, 13 columns
+  \item \textbf{Cleaned data:} 49,801 rows, 30 columns
+  \item \textbf{Missing values:} 10,346 in fare columns (cancelled rides) $\rightarrow$ filled with 0
+  \item \textbf{Duplicates removed:} 1,199 rows
+  \item \textbf{Cancellation Rate:} 10.40\% (5,180 rides)
+  \item \textbf{Peak Cancellation:} 13.22\% vs 9.46\% off-peak ($t$-test: $p < 0.0001$)
+  \item \textbf{Service test:} Chi-square $p = 0.66$ --- service type does NOT affect cancellation
+  \item \textbf{Total Revenue:} Rs.68,37,929
+  \item \textbf{Highest revenue service:} cab\_economy (Rs.26.9L)
+  \item \textbf{Most rides service:} bike (17,492 rides)
+  \item \textbf{Best hour to ride:} 2 PM --- 7.00\% cancellation rate
+  \item \textbf{Worst hour to ride:} 5 PM --- 14.14\% cancellation rate
+  \item \textbf{Top zone:} Koramangala --- Rs.2,73,504 revenue
+  \item \textbf{Peak hours defined:} 8--10 AM and 5--7 PM
+  \item \textbf{Avg speed:} 18.31 km/h
+  \item \textbf{Avg fare per km:} Rs.20.94
+\end{itemize}
+
+\end{document}
