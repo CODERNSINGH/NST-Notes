@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AWS Lab Builder — build it, then get graded</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0F1B2D; --surface:#152740; --surface-2:#1C324F;
+    --grid:rgba(232,240,247,0.06); --text:#E7EEF5; --muted:#8CA0B3;
+    --allow:#4FD1C5; --block:#F2795A; --amber:#E8B94E; --line:rgba(232,240,247,0.14);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      linear-gradient(var(--grid) 1px, transparent 1px) 0 0/40px 40px,
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px) 0 0/40px 40px,
+      var(--bg);
+    color:var(--text); font-family:'Space Grotesk', sans-serif; min-height:100vh; padding-bottom:70px;
+  }
+  code,.mono,input,select,textarea,.rule-editor-row,.tag-row{font-family:'JetBrains Mono', monospace;}
+
+  header{padding:32px 24px 18px; max-width:960px; margin:0 auto; border-bottom:1px solid var(--line);}
+  .kicker{color:var(--amber); font-family:'JetBrains Mono', monospace; font-size:13px;}
+  h1{font-size:clamp(26px,4vw,36px); margin:6px 0 8px; font-weight:700; letter-spacing:-0.01em;}
+  header p{color:var(--muted); max-width:680px; line-height:1.55; margin:0; font-size:14.5px;}
+
+  nav.tabs{max-width:960px; margin:0 auto; display:flex; gap:2px; padding:20px 24px 0; flex-wrap:wrap;}
+  .tab-btn{
+    background:var(--surface); border:1px solid var(--line); border-bottom:none; color:var(--muted);
+    font-family:'JetBrains Mono', monospace; font-size:13px; padding:11px 16px; cursor:pointer;
+    border-radius:6px 6px 0 0; transition:color .15s ease;
+  }
+  .tab-btn span{color:var(--amber);}
+  .tab-btn:hover{color:var(--text);}
+  .tab-btn.active{background:var(--surface-2); color:var(--text); position:relative; top:1px; border-bottom:1px solid var(--surface-2);}
+
+  main{max-width:960px; margin:0 auto; background:var(--surface-2); border:1px solid var(--line); border-radius:0 6px 6px 6px; padding:26px 26px 30px;}
+  .panel{display:none;}
+  .panel.active{display:block; animation:fade .2s ease;}
+  @keyframes fade{from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:translateY(0);}}
+
+  .lede{color:var(--muted); line-height:1.6; border-left:3px solid var(--amber); padding:2px 0 2px 14px; margin:0 0 20px; font-size:14px;}
+
+  .tagbox{
+    display:flex; align-items:center; gap:10px; background:rgba(232,185,78,0.08);
+    border:1px dashed rgba(232,185,78,0.4); border-radius:6px; padding:10px 14px; margin-bottom:22px;
+    flex-wrap:wrap; font-size:13.5px;
+  }
+  .tagbox code{background:rgba(0,0,0,0.25); color:var(--amber); padding:3px 8px; border-radius:4px;}
+
+  .block{background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:18px 18px 16px; margin-bottom:16px;}
+  .block h3{margin:0 0 4px; font-size:15.5px; display:flex; align-items:center; gap:8px; justify-content:space-between;}
+  .block h3 .hint{font-size:11.5px; color:var(--muted); font-weight:400; font-family:'JetBrains Mono',monospace;}
+  .block .note{color:var(--muted); font-size:12.5px; margin:0 0 14px; line-height:1.5;}
+
+  .field-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px;}
+  .field label{display:block; font-size:11.5px; color:var(--muted); margin-bottom:5px; font-family:'Space Grotesk';}
+  .field input[type=text], .field select{
+    width:100%; background:var(--bg); border:1px solid var(--line); color:var(--text);
+    padding:8px 10px; border-radius:5px; font-size:13.5px;
+  }
+  .field input[type=text]:focus, .field select:focus{outline:1.5px solid var(--allow);}
+  .field.checkbox{display:flex; align-items:center; gap:8px; margin-top:6px;}
+  .field.checkbox input{accent-color:var(--allow); width:16px; height:16px;}
+  .field.checkbox label{margin:0; color:var(--text); font-size:13px; font-family:'Space Grotesk';}
+
+  .tag-row, .rule-editor-row{display:flex; gap:6px; margin-bottom:6px; align-items:center; flex-wrap:wrap;}
+  .tag-row input{background:var(--bg); border:1px solid var(--line); color:var(--text); padding:6px 8px; border-radius:4px; font-size:12.5px; flex:1; min-width:110px;}
+  .rule-editor-row select, .rule-editor-row input{background:var(--bg); border:1px solid var(--line); color:var(--text); padding:6px 8px; border-radius:4px; font-size:12.5px;}
+  .rule-editor-row select:first-child{min-width:120px;}
+  .rule-editor-row .proto-display{width:52px; text-align:center; color:var(--muted);}
+  .rule-editor-row input[type=text]{width:70px;}
+  .rule-editor-row select:last-of-type, .rule-editor-row select.src-select{min-width:130px;}
+  .rule-editor-row input.custom-cidr{width:140px;}
+
+  .mini-btn{
+    border:1px solid var(--line); background:var(--bg); color:var(--text); font-family:'JetBrains Mono',monospace;
+    font-size:11px; padding:5px 9px; border-radius:4px; cursor:pointer;
+  }
+  .mini-btn:hover{border-color:var(--allow);}
+  .mini-btn.danger{color:var(--block); border-color:rgba(242,121,90,0.4); padding:5px 8px;}
+  .mini-btn.add{margin-top:4px; color:var(--allow); border-color:rgba(79,209,197,0.4);}
+
+  .check-btn{
+    background:var(--allow); color:#08211D; border:none; padding:11px 22px; border-radius:6px;
+    font-family:'Space Grotesk'; font-weight:700; font-size:14px; cursor:pointer; margin:10px 0 4px;
+  }
+  .check-btn:hover{filter:brightness(1.08);}
+
+  .score-panel{margin-top:18px;}
+  .score-total{
+    display:flex; align-items:baseline; gap:10px; background:var(--surface); border:1px solid var(--line);
+    border-radius:8px; padding:14px 18px; margin-bottom:14px;
+  }
+  .score-total .num{font-family:'JetBrains Mono',monospace; font-size:26px; font-weight:700; color:var(--amber);}
+  .score-total .label{color:var(--muted); font-size:13px;}
+
+  .part-block{background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:14px 16px; margin-bottom:10px;}
+  .part-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;}
+  .part-head strong{font-size:14px;}
+  .part-head .pts{font-family:'JetBrains Mono',monospace; font-size:12.5px; padding:2px 9px; border-radius:20px;}
+  .pts.full{background:var(--allow); color:#08211D;}
+  .pts.partial{background:var(--amber); color:#2B1E00;}
+  .pts.zero{background:var(--block); color:#331209;}
+  .bar-track{height:5px; background:rgba(255,255,255,0.08); border-radius:3px; overflow:hidden; margin-bottom:10px;}
+  .bar-fill{height:100%; background:var(--allow); border-radius:3px; transition:width .3s ease;}
+  .check-item{display:flex; gap:8px; align-items:flex-start; font-size:12.5px; padding:4px 0; color:var(--muted);}
+  .check-item .icon{flex-shrink:0; width:16px; text-align:center; font-weight:700;}
+  .check-item.pass .icon{color:var(--allow);}
+  .check-item.fail .icon{color:var(--block);}
+  .check-item.pass{color:var(--text);}
+
+  .warn-small{background:rgba(242,121,90,0.09); border-left:3px solid var(--block); padding:8px 12px; border-radius:0 5px 5px 0; font-size:12px; color:#F3C9BC; margin:8px 0;}
+
+  .sim-controls{display:flex; gap:10px; flex-wrap:wrap; margin:14px 0;}
+  .sim-btn{background:var(--surface); border:1px solid var(--line); color:var(--text); padding:9px 14px; border-radius:6px; font-family:'JetBrains Mono',monospace; font-size:12.5px; cursor:pointer;}
+  .sim-btn:hover{border-color:var(--amber);}
+  .terminal{background:#081019; border:1px solid var(--line); border-radius:8px; padding:14px 16px; font-family:'JetBrains Mono',monospace; font-size:12.5px; line-height:1.7; min-height:60px; white-space:pre-wrap; margin-top:6px;}
+  .terminal .ok-line{color:var(--allow);}
+  .terminal .bad-line{color:var(--block);}
+  .badge-protocol{display:inline-block; padding:2px 8px; border-radius:20px; font-size:11px; margin-left:8px;}
+  .badge-protocol.h1{background:var(--muted); color:#08131F;}
+  .badge-protocol.h2{background:var(--allow); color:#08211D;}
+  .badge-protocol.h3{background:var(--amber); color:#2B1E00;}
+
+  footer{max-width:960px; margin:24px auto 0; padding:0 24px; color:var(--muted); font-size:12px; text-align:center;}
+
+  @media(max-width:600px){
+    main{padding:18px 14px 20px;}
+    .rule-editor-row{flex-direction:column; align-items:stretch;}
+    .rule-editor-row select, .rule-editor-row input{width:100%;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="kicker">CSAI321 · build it yourself</div>
+  <h1>AWS Lab Builder</h1>
+  <p>These are real input fields, not a description of steps. Type the same names, CIDRs, tags, and rules you're entering in the actual AWS console, then hit "Check my build" — the JS grades what you actually typed against the rubric, part by part.</p>
+</header>
+
+<nav class="tabs">
+  <button class="tab-btn active" data-tab="q1">Q1 <span>·</span> Custom VPC</button>
+  <button class="tab-btn" data-tab="q3">Q3 <span>·</span> Web Server Firewall</button>
+  <button class="tab-btn" data-tab="lab4">Lab 4 <span>·</span> HTTP/1.1→3</button>
+</nav>
+
+<main>
+
+  <!-- ============================================================ Q1 ============================================================ -->
+  <section class="panel active" id="q1">
+    <p class="lede">Mirror your console build here: VPC → two subnets → IGW → route table → security group → instance. Every resource needs the tag below or it's invisible to the grader — that includes the route table, which is the one people forget.</p>
+    <div class="tagbox">Required tag on every resource: <code>csai321:lab</code> = <code>vpc-reach</code></div>
+
+    <div class="block">
+      <h3>VPC <span class="hint">7 marks live in Part A</span></h3>
+      <div class="field-grid">
+        <div class="field"><label>Name</label><input type="text" id="q1-vpc-name" placeholder="vpc-lab"></div>
+        <div class="field"><label>IPv4 CIDR</label><input type="text" id="q1-vpc-cidr" placeholder="10.20.0.0/16"></div>
+      </div>
+      <p class="note">Tags on the VPC (add <code>csai321:lab</code>/<code>vpc-reach</code>, and later <code>csai321:hosts</code> for Part E):</p>
+      <div id="q1-vpc-tags"></div>
+    </div>
+
+    <div class="block">
+      <h3>Subnet A</h3>
+      <div class="field-grid">
+        <div class="field"><label>Name</label><input type="text" id="q1-subA-name" placeholder="subnet-a"></div>
+        <div class="field"><label>CIDR</label><input type="text" id="q1-subA-cidr" placeholder="10.20.1.0/24"></div>
+        <div class="field"><label>Availability Zone</label>
+          <select id="q1-subA-az"><option value="">-- select --</option><option>us-east-1a</option><option>us-east-1b</option><option>us-east-1c</option></select>
+        </div>
+      </div>
+      <div class="field checkbox"><input type="checkbox" id="q1-subA-auto"><label for="q1-subA-auto">Auto-assign public IPv4 enabled</label></div>
+      <p class="note" style="margin-top:10px;">Tags:</p>
+      <div id="q1-subA-tags"></div>
+    </div>
+
+    <div class="block">
+      <h3>Subnet B <span class="hint">stays empty — just proves two AZs</span></h3>
+      <div class="field-grid">
+        <div class="field"><label>Name</label><input type="text" id="q1-subB-name" placeholder="subnet-b"></div>
+        <div class="field"><label>CIDR</label><input type="text" id="q1-subB-cidr" placeholder="10.20.2.0/24"></div>
+        <div class="field"><label>Availability Zone</label>
+          <select id="q1-subB-az"><option value="">-- select --</option><option>us-east-1a</option><option>us-east-1b</option><option>us-east-1c</option></select>
+        </div>
+      </div>
+      <div class="field checkbox"><input type="checkbox" id="q1-subB-auto"><label for="q1-subB-auto">Auto-assign public IPv4 enabled</label></div>
+      <p class="note" style="margin-top:10px;">Tags:</p>
+      <div id="q1-subB-tags"></div>
+    </div>
+
+    <div class="block">
+      <h3>Internet Gateway &amp; Route Table <span class="hint">4 marks in Part B</span></h3>
+      <div class="field-grid">
+        <div class="field"><label>IGW name</label><input type="text" id="q1-igw-name" placeholder="igw-lab"></div>
+        <div class="field"><label>Route table name</label><input type="text" id="q1-rt-name" placeholder="rt-public"></div>
+      </div>
+      <div class="field checkbox"><input type="checkbox" id="q1-igw-attached"><label for="q1-igw-attached">IGW attached to vpc-lab</label></div>
+      <div class="field-grid" style="margin-top:10px;">
+        <div class="field"><label>Route: 0.0.0.0/0 → target</label>
+          <select id="q1-rt-target"><option value="">-- select target --</option><option value="igw-lab">igw-lab</option><option value="local">local</option></select>
+        </div>
+      </div>
+      <div class="field checkbox"><input type="checkbox" id="q1-rt-assocA"><label for="q1-rt-assocA">Associate subnet-a</label></div>
+      <div class="field checkbox"><input type="checkbox" id="q1-rt-assocB"><label for="q1-rt-assocB">Associate subnet-b</label></div>
+      <div class="warn-small">Leave subnet-b's box unchecked — it must stay on the main route table.</div>
+      <p class="note" style="margin-top:6px;">IGW tags:</p>
+      <div id="q1-igw-tags"></div>
+      <p class="note" style="margin-top:10px;">Route table tags:</p>
+      <div id="q1-rt-tags"></div>
+    </div>
+
+    <div class="block">
+      <h3>Security group <span class="hint">3 marks in Part C</span></h3>
+      <div class="field-grid">
+        <div class="field"><label>Name</label><input type="text" id="q1-sg-name" placeholder="admin-sg"></div>
+        <div class="field"><label>Description</label><input type="text" id="q1-sg-desc" placeholder="csai321 admin access"></div>
+      </div>
+      <div class="warn-small">Names starting with <code>sg-</code> are rejected by AWS — hence <code>admin-sg</code>, not <code>sg-admin</code>.</div>
+      <p class="note" style="margin-top:10px;">Inbound rules (exactly one, SSH from a single /32):</p>
+      <div id="q1-sg-rules"></div>
+      <p class="note" style="margin-top:10px;">Tags:</p>
+      <div id="q1-sg-tags"></div>
+    </div>
+
+    <div class="block">
+      <h3>EC2 instance <span class="hint">5 marks in Part D</span></h3>
+      <div class="field-grid">
+        <div class="field"><label>Name</label><input type="text" id="q1-ec2-name" placeholder="ec2-lab"></div>
+        <div class="field"><label>AMI</label>
+          <select id="q1-ec2-ami"><option value="">-- select --</option><option>Amazon Linux 2023</option><option>Ubuntu 22.04</option><option>Windows Server 2022</option></select>
+        </div>
+        <div class="field"><label>Instance type</label>
+          <select id="q1-ec2-type"><option value="">-- select --</option><option>t3.micro</option><option>t2.micro</option><option>t3.small</option></select>
+        </div>
+        <div class="field"><label>Subnet</label>
+          <select id="q1-ec2-subnet"><option value="">-- select --</option><option value="subnet-a">subnet-a</option><option value="subnet-b">subnet-b</option></select>
+        </div>
+        <div class="field"><label>Security group</label>
+          <select id="q1-ec2-sg"><option value="">-- select --</option><option value="admin-sg">admin-sg</option><option value="default">default</option></select>
+        </div>
+      </div>
+      <div class="field checkbox"><input type="checkbox" id="q1-ec2-publicip"><label for="q1-ec2-publicip">Auto-assign public IP enabled</label></div>
+      <div class="field checkbox"><input type="checkbox" id="q1-ec2-running"><label for="q1-ec2-running">Instance launched and state = running</label></div>
+      <p class="note" style="margin-top:10px;">Tags:</p>
+      <div id="q1-ec2-tags"></div>
+    </div>
+
+    <button class="check-btn" onclick="validateQ1()">Check my build →</button>
+    <div class="score-panel" id="q1-results"></div>
+  </section>
+
+  <!-- ============================================================ Q3 ============================================================ -->
+  <section class="panel" id="q3">
+    <p class="lede">No custom network here — you're only building a security group and one instance behind it. Public on 80/443, locked to your machine on 22.</p>
+    <div class="tagbox">Required tag on both resources: <code>csai321:lab</code> = <code>ec2-firewall</code></div>
+
+    <div class="block">
+      <h3>Security group <span class="hint">9 marks in Part A</span></h3>
+      <div class="field-grid">
+        <div class="field"><label>Name</label><input type="text" id="q3-sg-name" placeholder="web-sg"></div>
+        <div class="field"><label>Description</label><input type="text" id="q3-sg-desc" placeholder="csai321 public web server"></div>
+      </div>
+      <div class="warn-small">Reserved prefix again: it's <code>web-sg</code>, not <code>sg-web</code>. Add exactly 3 inbound rules — a 4th (even an Anywhere-IPv6 entry) costs the rule-count mark.</div>
+      <p class="note" style="margin-top:10px;">Inbound rules:</p>
+      <div id="q3-sg-rules"></div>
+      <p class="note" style="margin-top:10px;">Tags:</p>
+      <div id="q3-sg-tags"></div>
+    </div>
+
+    <div class="block">
+      <h3>EC2 instance <span class="hint">5 marks in Part B, tag check worth 1 more</span></h3>
+      <div class="field-grid">
+        <div class="field"><label>Name</label><input type="text" id="q3-ec2-name" placeholder="web-server"></div>
+        <div class="field"><label>Instance type</label>
+          <select id="q3-ec2-type"><option value="">-- select --</option><option>t3.micro</option><option>t2.micro</option></select>
+        </div>
+        <div class="field"><label>Security group</label>
+          <select id="q3-ec2-sg"><option value="">-- select --</option><option value="web-sg">web-sg</option><option value="default">default</option></select>
+        </div>
+      </div>
+      <div class="field checkbox"><input type="checkbox" id="q3-ec2-publicip"><label for="q3-ec2-publicip">Auto-assign public IP enabled</label></div>
+      <div class="field checkbox"><input type="checkbox" id="q3-ec2-running"><label for="q3-ec2-running">Instance launched and state = running</label></div>
+      <div class="field checkbox"><input type="checkbox" id="q3-ec2-onlyone" checked><label for="q3-ec2-onlyone">No duplicate "web-server" instance left running from an earlier attempt</label></div>
+      <p class="note" style="margin-top:10px;">Tags (include <code>csai321:defaultrules</code> here for Part C):</p>
+      <div id="q3-ec2-tags"></div>
+    </div>
+
+    <button class="check-btn" onclick="validateQ3()">Check my build →</button>
+    <div class="score-panel" id="q3-results"></div>
+  </section>
+
+  <!-- ============================================================ LAB 4 ============================================================ -->
+  <section class="panel" id="lab4">
+    <p class="lede">This lab isn't scored rule-by-rule by the real grader (it just confirms a VPC + IGW exist in your account) — but the security group still has to be right, or the servers won't be reachable. Build it below, then fire the simulator to see what actually gets through.</p>
+
+    <div class="block">
+      <h3>Security group — web-server-sg</h3>
+      <div class="field-grid">
+        <div class="field"><label>Name</label><input type="text" id="l4-sg-name" placeholder="web-server-sg"></div>
+      </div>
+      <p class="note" style="margin-top:10px;">Inbound rules — this lab is intentionally wide open (unlike Q1/Q3), so every port here is Anywhere-IPv4:</p>
+      <div id="l4-sg-rules"></div>
+    </div>
+
+    <div class="block">
+      <h3>EC2 instance — my-web-server</h3>
+      <div class="field-grid">
+        <div class="field"><label>Name</label><input type="text" id="l4-ec2-name" placeholder="my-web-server"></div>
+        <div class="field"><label>Key pair</label><input type="text" id="l4-ec2-keypair" placeholder="vockey"></div>
+        <div class="field"><label>Security group</label>
+          <select id="l4-ec2-sg"><option value="">-- select --</option><option value="web-server-sg">web-server-sg</option></select>
+        </div>
+      </div>
+      <div class="field checkbox"><input type="checkbox" id="l4-ec2-publicip"><label for="l4-ec2-publicip">Auto-assign public IP enabled</label></div>
+      <div class="field checkbox"><input type="checkbox" id="l4-ec2-running"><label for="l4-ec2-running">Instance launched and state = running (2/2 checks passed)</label></div>
+    </div>
+
+    <button class="check-btn" onclick="validateLab4()">Check my build →</button>
+    <div class="score-panel" id="lab4-results"></div>
+
+    <div class="block" style="margin-top:6px;">
+      <h3>Port simulator</h3>
+      <p class="note">These buttons check your security group rules above (and whether the instance is running) before "connecting" — exactly like a real browser would fail silently against a closed port.</p>
+      <div class="sim-controls">
+        <button class="sim-btn" onclick="simulateServer('http1')">▶ python3 -m http.server 8080</button>
+        <button class="sim-btn" onclick="simulateServer('http2')">▶ hypercorn --bind :8443 (TLS)</button>
+        <button class="sim-btn" onclick="simulateServer('http3')">▶ hypercorn --quic-bind :8443</button>
+      </div>
+      <div class="terminal" id="l4-terminal">$ waiting for a command…</div>
+    </div>
+  </section>
+
+</main>
+
+<footer>Builds are graded entirely in your browser via JS against the CSAI321 rubric text — nothing here touches AWS or your Learner Lab account.</footer>
+
+<script>
+/* ---------- utilities ---------- */
+function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function hasTag(tags,key,value){ return tags.some(t=>t.key.trim()===key && t.value.trim()===value); }
+function getTagValue(tags,key){ const t=tags.find(t=>t.key.trim()===key); return t? t.value.trim() : null; }
+function cidrHostCount(cidr){
+  const m=(cidr||'').trim().match(/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\/(\d{1,2})$/);
+  if(!m) return null;
+  const prefix=parseInt(m[1],10);
+  if(prefix<0||prefix>32) return null;
+  const bits=32-prefix;
+  if(bits===0) return 1;
+  if(bits===1) return 0;
+  return Math.pow(2,bits)-2;
+}
+function isSingleIP(str){ return /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\/32$/.test((str||'').trim()); }
+function getEffectiveSource(r){
+  switch(r.sourceType){
+    case 'myip': return '203.0.113.42/32';
+    case 'anywhere4': return '0.0.0.0/0';
+    case 'anywhere6': return '::/0';
+    case 'custom': return (r.customCidr||'').trim();
+    default: return '';
+  }
+}
+function check(label, passed){ return {label, passed}; }
+
+/* ---------- generic tag list component ---------- */
+const tagRegistries = {};
+function initTags(containerId, initial){
+  tagRegistries[containerId] = initial || [];
+  renderTags(containerId);
+}
+function renderTags(containerId){
+  const arr = tagRegistries[containerId];
+  const el = document.getElementById(containerId);
+  el.innerHTML = arr.map((t,i)=>`
+    <div class="tag-row">
+      <input type="text" placeholder="key e.g. csai321:lab" value="${escapeHtml(t.key)}" oninput="updateTag('${containerId}',${i},'key',this.value)">
+      <input type="text" placeholder="value e.g. vpc-reach" value="${escapeHtml(t.value)}" oninput="updateTag('${containerId}',${i},'value',this.value)">
+      <button class="mini-btn danger" onclick="removeTag('${containerId}',${i})">✕</button>
+    </div>`).join('') + `<button class="mini-btn add" onclick="addTag('${containerId}')">+ add tag</button>`;
+}
+function addTag(id){ tagRegistries[id].push({key:'',value:''}); renderTags(id); }
+function removeTag(id,i){ tagRegistries[id].splice(i,1); renderTags(id); }
+function updateTag(id,i,field,val){ tagRegistries[id][i][field]=val; }
+
+/* ---------- generic rule list component ---------- */
+const ruleRegistries = {};
+const TYPE_OPTIONS = ['SSH','HTTP','HTTPS','Custom TCP','Custom UDP','All traffic'];
+function initRules(containerId, initial){
+  ruleRegistries[containerId] = initial || [];
+  renderRules(containerId);
+}
+function renderRules(containerId){
+  const arr = ruleRegistries[containerId];
+  const el = document.getElementById(containerId);
+  el.innerHTML = arr.map((r,i)=>{
+    const portEditable = (r.type==='Custom TCP' || r.type==='Custom UDP');
+    const sourceExtra = r.sourceType==='custom'
+      ? `<input type="text" class="custom-cidr" placeholder="e.g. 203.0.113.5/32" value="${escapeHtml(r.customCidr||'')}" oninput="updateRule('${containerId}',${i},'customCidr',this.value)">`
+      : '';
+    return `<div class="rule-editor-row">
+      <select onchange="ruleTypeChanged('${containerId}',${i},this.value)">
+        ${TYPE_OPTIONS.map(t=>`<option value="${t}" ${t===r.type?'selected':''}>${t}</option>`).join('')}
+      </select>
+      <input type="text" class="proto-display" value="${r.protocol}" readonly>
+      <input type="text" ${portEditable?'':'readonly'} value="${escapeHtml(r.port)}" oninput="updateRule('${containerId}',${i},'port',this.value)" placeholder="port">
+      <select class="src-select" onchange="updateRule('${containerId}',${i},'sourceType',this.value); renderRules('${containerId}')">
+        <option value="myip" ${r.sourceType==='myip'?'selected':''}>My IP</option>
+        <option value="anywhere4" ${r.sourceType==='anywhere4'?'selected':''}>Anywhere-IPv4</option>
+        <option value="anywhere6" ${r.sourceType==='anywhere6'?'selected':''}>Anywhere-IPv6</option>
+        <option value="custom" ${r.sourceType==='custom'?'selected':''}>Custom CIDR</option>
+      </select>
+      ${sourceExtra}
+      <button class="mini-btn danger" onclick="removeRule('${containerId}',${i})">✕</button>
+    </div>`;
+  }).join('') + `<button class="mini-btn add" onclick="addRule('${containerId}')">+ add rule</button>`;
+}
+function ruleTypeChanged(id,i,val){
+  const r = ruleRegistries[id][i];
+  r.type = val;
+  if(val==='SSH'){ r.protocol='TCP'; r.port='22'; }
+  else if(val==='HTTP'){ r.protocol='TCP'; r.port='80'; }
+  else if(val==='HTTPS'){ r.protocol='TCP'; r.port='443'; }
+  else if(val==='Custom TCP'){ r.protocol='TCP'; }
+  else if(val==='Custom UDP'){ r.protocol='UDP'; }
+  else if(val==='All traffic'){ r.protocol='All'; r.port='All'; }
+  renderRules(id);
+}
+function addRule(id, defaults){ ruleRegistries[id].push(defaults || {type:'SSH',protocol:'TCP',port:'22',sourceType:'myip',customCidr:''}); renderRules(id); }
+function removeRule(id,i){ ruleRegistries[id].splice(i,1); renderRules(id); }
+function updateRule(id,i,field,val){ ruleRegistries[id][i][field]=val; }
+
+/* ---------- results rendering ---------- */
+function renderResults(containerId, parts, total, maxTotal){
+  const el = document.getElementById(containerId);
+  const pct = Math.round((total/maxTotal)*100);
+  let html = `<div class="score-total"><span class="num">${round1(total)} / ${maxTotal}</span><span class="label">marks so far (${pct}%)</span></div>`;
+  parts.forEach(p=>{
+    const cls = p.pts===p.max ? 'full' : (p.pts>0 ? 'partial' : 'zero');
+    const barPct = p.max>0 ? Math.round((p.pts/p.max)*100) : 0;
+    html += `<div class="part-block">
+      <div class="part-head"><strong>${p.group}</strong><span class="pts ${cls}">${round1(p.pts)} / ${p.max}</span></div>
+      <div class="bar-track"><div class="bar-fill" style="width:${barPct}%"></div></div>
+      ${p.details.map(d=>`<div class="check-item ${d.passed?'pass':'fail'}"><span class="icon">${d.passed?'✓':'✕'}</span><span>${d.label}</span></div>`).join('')}
+    </div>`;
+  });
+  el.innerHTML = html;
+  el.scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+function round1(n){ return Math.round(n*10)/10; }
+
+/* ================================================================ Q1 STATE ================================================================ */
+const q1 = {
+  vpc:{name:'',cidr:''},
+  subnetA:{name:'',cidr:'',az:'',autoAssign:false},
+  subnetB:{name:'',cidr:'',az:'',autoAssign:false},
+  igw:{name:'',attached:false},
+  rt:{name:'',target:'',assocA:false,assocB:false},
+  sg:{name:'',desc:''},
+  ec2:{name:'',ami:'',type:'',subnet:'',sg:'',publicIp:false,running:false}
+};
+initTags('q1-vpc-tags',[]);
+initTags('q1-subA-tags',[]);
+initTags('q1-subB-tags',[]);
+initTags('q1-igw-tags',[]);
+initTags('q1-rt-tags',[]);
+initTags('q1-sg-tags',[]);
+initTags('q1-ec2-tags',[]);
+initRules('q1-sg-rules',[{type:'SSH',protocol:'TCP',port:'22',sourceType:'myip',customCidr:''}]);
+
+function bind(id, obj, key, type){
+  const el = document.getElementById(id);
+  const evt = type==='checkbox' ? 'change' : (el.tagName==='SELECT' ? 'change' : 'input');
+  el.addEventListener(evt, ()=>{
+    obj[key] = type==='checkbox' ? el.checked : el.value;
+  });
+}
+bind('q1-vpc-name', q1.vpc, 'name');
+bind('q1-vpc-cidr', q1.vpc, 'cidr');
+bind('q1-subA-name', q1.subnetA, 'name');
+bind('q1-subA-cidr', q1.subnetA, 'cidr');
+bind('q1-subA-az', q1.subnetA, 'az');
+bind('q1-subA-auto', q1.subnetA, 'autoAssign', 'checkbox');
+bind('q1-subB-name', q1.subnetB, 'name');
+bind('q1-subB-cidr', q1.subnetB, 'cidr');
+bind('q1-subB-az', q1.subnetB, 'az');
+bind('q1-subB-auto', q1.subnetB, 'autoAssign', 'checkbox');
+bind('q1-igw-name', q1.igw, 'name');
+bind('q1-igw-attached', q1.igw, 'attached', 'checkbox');
+bind('q1-rt-name', q1.rt, 'name');
+bind('q1-rt-target', q1.rt, 'target');
+bind('q1-rt-assocA', q1.rt, 'assocA', 'checkbox');
+bind('q1-rt-assocB', q1.rt, 'assocB', 'checkbox');
+bind('q1-sg-name', q1.sg, 'name');
+bind('q1-sg-desc', q1.sg, 'desc');
+bind('q1-ec2-name', q1.ec2, 'name');
+bind('q1-ec2-ami', q1.ec2, 'ami');
+bind('q1-ec2-type', q1.ec2, 'type');
+bind('q1-ec2-subnet', q1.ec2, 'subnet');
+bind('q1-ec2-sg', q1.ec2, 'sg');
+bind('q1-ec2-publicip', q1.ec2, 'publicIp', 'checkbox');
+bind('q1-ec2-running', q1.ec2, 'running', 'checkbox');
+
+function validateQ1(){
+  const s = q1;
+  const vpcTagged = hasTag(tagRegistries['q1-vpc-tags'],'csai321:lab','vpc-reach');
+  const subATagged = hasTag(tagRegistries['q1-subA-tags'],'csai321:lab','vpc-reach');
+  const subBTagged = hasTag(tagRegistries['q1-subB-tags'],'csai321:lab','vpc-reach');
+  const igwTagged = hasTag(tagRegistries['q1-igw-tags'],'csai321:lab','vpc-reach');
+  const rtTagged = hasTag(tagRegistries['q1-rt-tags'],'csai321:lab','vpc-reach');
+  const sgTagged = hasTag(tagRegistries['q1-sg-tags'],'csai321:lab','vpc-reach');
+  const ec2Tagged = hasTag(tagRegistries['q1-ec2-tags'],'csai321:lab','vpc-reach');
+
+  const parts = [];
+  let total = 0;
+
+  // Part A
+  let aPts=0;
+  const cidrOk = s.vpc.cidr.trim()==='10.20.0.0/16';
+  const subAOk = s.subnetA.name.trim()==='subnet-a' && s.subnetA.cidr.trim()==='10.20.1.0/24' && s.subnetA.az==='us-east-1a' && s.subnetA.autoAssign===true;
+  const subBOk = s.subnetB.name.trim()==='subnet-b' && s.subnetB.cidr.trim()==='10.20.2.0/24' && s.subnetB.az==='us-east-1b' && s.subnetB.autoAssign===false && s.subnetB.az && s.subnetB.az!==s.subnetA.az;
+  if(cidrOk && vpcTagged) aPts+=2;
+  if(subAOk && subATagged) aPts+=2;
+  if(subBOk && subBTagged) aPts+=2;
+  if(vpcTagged && subATagged && subBTagged) aPts+=1;
+  parts.push({group:'Part A — VPC & subnets', pts:aPts, max:7, details:[
+    check('VPC CIDR is exactly 10.20.0.0/16', cidrOk),
+    check('VPC carries csai321:lab = vpc-reach', vpcTagged),
+    check('subnet-a: correct name/CIDR/AZ 1a, auto-assign ON', subAOk),
+    check('subnet-a tagged', subATagged),
+    check('subnet-b: correct name/CIDR/AZ 1b (distinct from A), auto-assign OFF', subBOk),
+    check('subnet-b tagged', subBTagged),
+  ]});
+  total+=aPts;
+
+  // Part B
+  let bPts=0;
+  const igwOk = s.igw.name.trim()==='igw-lab' && s.igw.attached===true;
+  const rtRouteOk = s.rt.name.trim()==='rt-public' && s.rt.target==='igw-lab';
+  const rtAssocOk = s.rt.assocA===true && s.rt.assocB===false;
+  if(igwOk && igwTagged) bPts+=1;
+  if(rtRouteOk && rtTagged) bPts+=1;
+  if(rtAssocOk && rtTagged) bPts+=1;
+  if(igwTagged && rtTagged) bPts+=1;
+  parts.push({group:'Part B — IGW & routing', pts:bPts, max:4, details:[
+    check('igw-lab created and attached to vpc-lab', igwOk),
+    check('igw-lab tagged', igwTagged),
+    check('rt-public routes 0.0.0.0/0 → igw-lab', rtRouteOk),
+    check('rt-public tagged', rtTagged),
+    check('Only subnet-a associated (subnet-b left on main table)', rtAssocOk),
+  ]});
+  total+=bPts;
+
+  // Part C
+  const rules = ruleRegistries['q1-sg-rules'];
+  const exactlyOne = rules.length===1;
+  let sgRuleOk=false;
+  if(exactlyOne){
+    const r=rules[0];
+    sgRuleOk = r.type==='SSH' && r.protocol==='TCP' && String(r.port)==='22' && isSingleIP(getEffectiveSource(r));
+  }
+  const sgNameOk = s.sg.name.trim()==='admin-sg';
+  const cPts = (sgRuleOk && sgNameOk && sgTagged) ? 3 : 0;
+  parts.push({group:'Part C — Security group', pts:cPts, max:3, details:[
+    check('Name is exactly admin-sg', sgNameOk),
+    check('Exactly one inbound rule: SSH/TCP/22 from a single /32', exactlyOne && sgRuleOk),
+    check('admin-sg tagged', sgTagged),
+  ]});
+  total+=cPts;
+
+  // Part D
+  let dPts=0;
+  const nameOk = s.ec2.name.trim()==='ec2-lab';
+  const amiOk = s.ec2.ami==='Amazon Linux 2023';
+  const typeOk = s.ec2.type==='t3.micro';
+  const subnetOk = s.ec2.subnet==='subnet-a';
+  const pubOk = s.ec2.publicIp===true;
+  const sgOk = s.ec2.sg==='admin-sg';
+  const runOk = s.ec2.running===true;
+  if(ec2Tagged){
+    if(nameOk) dPts+=0.5;
+    if(amiOk) dPts+=0.5;
+    if(typeOk) dPts+=1;
+    if(subnetOk) dPts+=1;
+    if(pubOk) dPts+=1;
+    if(sgOk) dPts+=0.5;
+    if(runOk) dPts+=0.5;
+  }
+  parts.push({group:'Part D — EC2 instance', pts:dPts, max:5, details:[
+    check('ec2-lab tagged (required for any credit here)', ec2Tagged),
+    check('Name ec2-lab, AMI Amazon Linux 2023', nameOk && amiOk),
+    check('Instance type t3.micro', typeOk),
+    check('Launched in subnet-a with public IP enabled', subnetOk && pubOk),
+    check('admin-sg attached and state running', sgOk && runOk),
+  ]});
+  total+=dPts;
+
+  // Part E
+  const expectedHosts = cidrHostCount(s.subnetA.cidr.trim()) ?? cidrHostCount('10.20.1.0/24');
+  const hostsTagVal = getTagValue(tagRegistries['q1-vpc-tags'],'csai321:hosts');
+  const ePass = vpcTagged && hostsTagVal===String(expectedHosts);
+  const ePts = ePass ? 1 : 0;
+  parts.push({group:'Part E — Concept tag', pts:ePts, max:1, details:[
+    check(`csai321:hosts on vpc-lab = ${expectedHosts} (usable hosts in subnet-a's /24)`, ePass),
+  ]});
+  total+=ePts;
+
+  renderResults('q1-results', parts, total, 20);
+}
+
+/* ================================================================ Q3 STATE ================================================================ */
+const q3 = { sg:{name:'',desc:''}, ec2:{name:'',type:'',sg:'',publicIp:false,running:false,onlyOne:true} };
+initTags('q3-sg-tags',[]);
+initTags('q3-ec2-tags',[]);
+initRules('q3-sg-rules',[{type:'SSH',protocol:'TCP',port:'22',sourceType:'myip',customCidr:''}]);
+
+bind('q3-sg-name', q3.sg, 'name');
+bind('q3-sg-desc', q3.sg, 'desc');
+bind('q3-ec2-name', q3.ec2, 'name');
+bind('q3-ec2-type', q3.ec2, 'type');
+bind('q3-ec2-sg', q3.ec2, 'sg');
+bind('q3-ec2-publicip', q3.ec2, 'publicIp', 'checkbox');
+bind('q3-ec2-running', q3.ec2, 'running', 'checkbox');
+bind('q3-ec2-onlyone', q3.ec2, 'onlyOne', 'checkbox');
+
+function validateQ3(){
+  const s = q3;
+  const sgTagged = hasTag(tagRegistries['q3-sg-tags'],'csai321:lab','ec2-firewall');
+  const ec2Tagged = hasTag(tagRegistries['q3-ec2-tags'],'csai321:lab','ec2-firewall');
+  const parts = [];
+  let total = 0;
+
+  // Part A
+  const rules = ruleRegistries['q3-sg-rules'];
+  const findRule = (type, port) => rules.find(r=>r.type===type && String(r.port)===String(port));
+  const sshRule = findRule('SSH','22');
+  const httpRule = findRule('HTTP','80');
+  const httpsRule = findRule('HTTPS','443');
+  const sshOk = !!sshRule && isSingleIP(getEffectiveSource(sshRule));
+  const httpOk = !!httpRule && getEffectiveSource(httpRule)==='0.0.0.0/0';
+  const httpsOk = !!httpsRule && getEffectiveSource(httpsRule)==='0.0.0.0/0';
+  const noIpv6 = !rules.some(r=>r.sourceType==='anywhere6');
+  const exactlyThree = rules.length===3;
+  const nameOk = s.sg.name.trim()==='web-sg';
+  let aPts=0;
+  if(sshOk && sgTagged) aPts+=3;
+  if(httpOk && sgTagged) aPts+=2;
+  if(httpsOk && sgTagged) aPts+=2;
+  if(exactlyThree && noIpv6 && sgTagged) aPts+=2;
+  parts.push({group:'Part A — Security group rules', pts:aPts, max:9, details:[
+    check('Name is exactly web-sg', nameOk),
+    check('web-sg tagged (required for any credit here)', sgTagged),
+    check('SSH 22 from a single /32 (not the world)', sshOk),
+    check('HTTP 80 open to 0.0.0.0/0', httpOk),
+    check('HTTPS 443 open to 0.0.0.0/0', httpsOk),
+    check('Exactly 3 inbound rules, no Anywhere-IPv6', exactlyThree && noIpv6),
+  ]});
+  total+=aPts;
+
+  // Part B
+  let bPts=0;
+  const inameOk = s.ec2.name.trim()==='web-server';
+  const typeOk = s.ec2.type==='t3.micro';
+  const pubOk = s.ec2.publicIp===true;
+  const sgAttachedOk = s.ec2.sg==='web-sg';
+  const runOk = s.ec2.running===true;
+  if(ec2Tagged && s.ec2.onlyOne){
+    if(inameOk) bPts+=1;
+    if(typeOk) bPts+=1;
+    if(pubOk) bPts+=1;
+    if(sgAttachedOk) bPts+=1;
+    if(runOk) bPts+=1;
+  }
+  parts.push({group:'Part B — EC2 instance', pts:bPts, max:5, details:[
+    check('web-server tagged and no duplicate instance left running', ec2Tagged && s.ec2.onlyOne),
+    check('Name web-server, type t3.micro', inameOk && typeOk),
+    check('Public IPv4 enabled', pubOk),
+    check('web-sg attached and state running', sgAttachedOk && runOk),
+  ]});
+  total+=bPts;
+
+  // Part C
+  const defaultRulesVal = getTagValue(tagRegistries['q3-ec2-tags'],'csai321:defaultrules');
+  const cPass = ec2Tagged && defaultRulesVal==='0';
+  const cPts = cPass ? 1 : 0;
+  parts.push({group:'Part C — Concept tag', pts:cPts, max:1, details:[
+    check('csai321:defaultrules on web-server = 0 (a brand-new SG starts with zero inbound rules)', cPass),
+  ]});
+  total+=cPts;
+
+  renderResults('q3-results', parts, total, 15);
+}
+
+/* ================================================================ LAB 4 STATE ================================================================ */
+initRules('l4-sg-rules',[
+  {type:'SSH',protocol:'TCP',port:'22',sourceType:'anywhere4',customCidr:''},
+  {type:'HTTP',protocol:'TCP',port:'80',sourceType:'anywhere4',customCidr:''},
+  {type:'HTTPS',protocol:'TCP',port:'443',sourceType:'anywhere4',customCidr:''},
+  {type:'Custom TCP',protocol:'TCP',port:'8080',sourceType:'anywhere4',customCidr:''},
+  {type:'Custom TCP',protocol:'TCP',port:'8443',sourceType:'anywhere4',customCidr:''},
+  {type:'Custom UDP',protocol:'UDP',port:'443',sourceType:'anywhere4',customCidr:''},
+  {type:'Custom UDP',protocol:'UDP',port:'8443',sourceType:'anywhere4',customCidr:''},
+]);
+const l4 = { sg:{name:''}, ec2:{name:'',keypair:'',sg:'',publicIp:false,running:false} };
+bind('l4-sg-name', l4.sg, 'name');
+bind('l4-ec2-name', l4.ec2, 'name');
+bind('l4-ec2-keypair', l4.ec2, 'keypair');
+bind('l4-ec2-sg', l4.ec2, 'sg');
+bind('l4-ec2-publicip', l4.ec2, 'publicIp', 'checkbox');
+bind('l4-ec2-running', l4.ec2, 'running', 'checkbox');
+
+const REQUIRED_L4_PORTS = [
+  {protocol:'TCP', port:'22', label:'SSH 22 (terminal login)'},
+  {protocol:'TCP', port:'80', label:'HTTP 80 (web)'},
+  {protocol:'TCP', port:'443', label:'HTTPS 443 (web / h2 / h3 upgrade)'},
+  {protocol:'TCP', port:'8080', label:'Custom TCP 8080 (HTTP/1.1)'},
+  {protocol:'TCP', port:'8443', label:'Custom TCP 8443 (HTTP/2)'},
+  {protocol:'UDP', port:'443', label:'Custom UDP 443 (QUIC / HTTP/3)'},
+  {protocol:'UDP', port:'8443', label:'Custom UDP 8443 (QUIC / HTTP/3)'},
+];
+function ruleOpenL4(protocol, port){
+  return ruleRegistries['l4-sg-rules'].some(r=> r.protocol===protocol && String(r.port)===String(port) && getEffectiveSource(r)==='0.0.0.0/0');
+}
+function validateLab4(){
+  const parts = [];
+  let total = 0; // informational only — no rubric marks for this lab
+
+  const ruleChecks = REQUIRED_L4_PORTS.map(p=>check(p.label + ' open to 0.0.0.0/0', ruleOpenL4(p.protocol, p.port)));
+  const nameOk = l4.sg.name.trim()==='web-server-sg';
+  ruleChecks.unshift(check('Security group named web-server-sg', nameOk));
+  const rulePassCount = ruleChecks.filter(c=>c.passed).length;
+  parts.push({group:'Security group', pts:rulePassCount, max:ruleChecks.length, details:ruleChecks});
+
+  const iNameOk = l4.ec2.name.trim()==='my-web-server';
+  const keyOk = l4.ec2.keypair.trim()==='vockey';
+  const sgOk = l4.ec2.sg==='web-server-sg';
+  const pubOk = l4.ec2.publicIp===true;
+  const runOk = l4.ec2.running===true;
+  const instChecks = [
+    check('Named my-web-server', iNameOk),
+    check('Using the pre-made vockey key pair', keyOk),
+    check('web-server-sg attached', sgOk),
+    check('Public IPv4 enabled', pubOk),
+    check('Instance running, 2/2 checks passed', runOk),
+  ];
+  const instPass = instChecks.filter(c=>c.passed).length;
+  parts.push({group:'Instance', pts:instPass, max:instChecks.length, details:instChecks});
+
+  const maxTotal = ruleChecks.length + instChecks.length;
+  total = rulePassCount + instPass;
+  renderResults('lab4-results', parts, total, maxTotal);
+}
+
+function simulateServer(kind){
+  const term = document.getElementById('l4-terminal');
+  const running = l4.ec2.running===true;
+  let lines = [];
+  const configs = {
+    http1:{protocol:'TCP', port:'8080', cmd:'python3 -m http.server 8080', badge:'h1', label:'HTTP/1.1'},
+    http2:{protocol:'TCP', port:'8443', cmd:'sudo ./venv/bin/hypercorn server:app --bind 0.0.0.0:8443 --keyfile key.pem --certfile cert.pem', badge:'h2', label:'HTTP/2'},
+    http3:{protocol:'UDP', port:'8443', cmd:'sudo ./venv/bin/hypercorn server:app --quic-bind 0.0.0.0:8443 --keyfile key.pem --certfile cert.pem', badge:'h3', label:'HTTP/3 (QUIC)'},
+  };
+  const c = configs[kind];
+  lines.push('$ ' + c.cmd);
+  if(!running){
+    lines.push('curl: connection refused — instance is not running yet.');
+    term.innerHTML = escapeHtml(lines.join('\n'));
+    return;
+  }
+  const open = ruleOpenL4(c.protocol, c.port);
+  if(!open){
+    lines.push(`Server started on the instance, but the browser request times out.`);
+    lines.push(`Security group has no ${c.protocol} ${c.port} rule open to 0.0.0.0/0 — add it above and re-run.`);
+    term.innerHTML = `<span class="bad-line">${escapeHtml(lines.join('\n'))}</span>`;
+    return;
+  }
+  lines.push(`Serving on 0.0.0.0:${c.port} …`);
+  lines.push(`Browser request to https://YOUR_IP:${c.port} succeeds.`);
+  term.innerHTML = `<span class="ok-line">${escapeHtml(lines.join('\n'))}</span>  DevTools protocol column → <span class="badge-protocol ${c.badge}">${c.label}</span>`;
+}
+
+/* ---------- tabs ---------- */
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.tab).classList.add('active');
+  });
+});
+</script>
+</body>
+</html>

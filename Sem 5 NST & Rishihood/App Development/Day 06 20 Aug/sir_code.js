@@ -31,7 +31,8 @@ process.stdin.on('data',data =>{
 
     if (data = '^[[B'){
         // up arrow key
-        
+        cursor++;
+        listSongs()
     }
     
 

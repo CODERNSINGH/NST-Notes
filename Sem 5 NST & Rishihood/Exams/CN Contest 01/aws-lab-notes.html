@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AWS Networking — Field Notes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0F1B2D;
+    --surface:#152740;
+    --surface-2:#1C324F;
+    --grid:rgba(232,240,247,0.06);
+    --text:#E7EEF5;
+    --muted:#8CA0B3;
+    --allow:#4FD1C5;
+    --block:#F2795A;
+    --amber:#E8B94E;
+    --line:rgba(232,240,247,0.14);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      linear-gradient(var(--grid) 1px, transparent 1px) 0 0/40px 40px,
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px) 0 0/40px 40px,
+      var(--bg);
+    color:var(--text);
+    font-family:'Space Grotesk', sans-serif;
+    min-height:100vh;
+    padding-bottom:60px;
+  }
+  code, .mono, .val, .tag, table td, table th, .rule-row div{
+    font-family:'JetBrains Mono', monospace;
+  }
+
+  header{
+    padding:36px 24px 20px;
+    max-width:920px;
+    margin:0 auto;
+    border-bottom:1px solid var(--line);
+  }
+  .kicker{
+    color:var(--amber);
+    font-family:'JetBrains Mono', monospace;
+    font-size:13px;
+    letter-spacing:0.02em;
+  }
+  h1{
+    font-size:clamp(28px,4vw,40px);
+    margin:6px 0 8px;
+    font-weight:700;
+    letter-spacing:-0.01em;
+  }
+  header p{
+    color:var(--muted);
+    max-width:640px;
+    line-height:1.55;
+    margin:0;
+  }
+
+  nav.tabs{
+    max-width:920px;
+    margin:0 auto;
+    display:flex;
+    gap:2px;
+    padding:20px 24px 0;
+    flex-wrap:wrap;
+  }
+  .tab-btn{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-bottom:none;
+    color:var(--muted);
+    font-family:'JetBrains Mono', monospace;
+    font-size:13px;
+    padding:12px 18px;
+    cursor:pointer;
+    border-radius:6px 6px 0 0;
+    transition:color .15s ease, background .15s ease;
+  }
+  .tab-btn span{color:var(--amber);}
+  .tab-btn:hover{color:var(--text);}
+  .tab-btn.active{
+    background:var(--surface-2);
+    color:var(--text);
+    border-color:var(--line);
+    border-bottom:1px solid var(--surface-2);
+    position:relative;
+    top:1px;
+  }
+
+  main{
+    max-width:920px;
+    margin:0 auto;
+    background:var(--surface-2);
+    border:1px solid var(--line);
+    border-radius:0 6px 6px 6px;
+    padding:28px 28px 8px;
+  }
+
+  .panel{display:none;}
+  .panel.active{display:block; animation:fade .25s ease;}
+  @keyframes fade{from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:translateY(0);}}
+
+  .lede{
+    color:var(--muted);
+    line-height:1.6;
+    border-left:3px solid var(--amber);
+    padding:2px 0 2px 16px;
+    margin:0 0 24px;
+  }
+
+  .tagbox{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background:rgba(232,185,78,0.08);
+    border:1px dashed rgba(232,185,78,0.4);
+    border-radius:6px;
+    padding:12px 16px;
+    margin-bottom:26px;
+    flex-wrap:wrap;
+    font-size:14px;
+  }
+  .tagbox .label{color:var(--muted); font-family:'Space Grotesk';}
+  .tagbox code{
+    background:rgba(0,0,0,0.25);
+    color:var(--amber);
+    padding:3px 8px;
+    border-radius:4px;
+  }
+
+  .accordion{
+    border:1px solid var(--line);
+    border-radius:8px;
+    margin-bottom:14px;
+    overflow:hidden;
+    background:var(--surface);
+  }
+  .accordion summary{
+    list-style:none;
+    cursor:pointer;
+    padding:16px 18px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+    font-weight:600;
+    font-size:15.5px;
+  }
+  .accordion summary::-webkit-details-marker{display:none;}
+  .accordion summary .marks{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    color:var(--bg);
+    background:var(--allow);
+    padding:3px 9px;
+    border-radius:20px;
+    font-weight:700;
+    flex-shrink:0;
+  }
+  .accordion summary .chevron{
+    color:var(--muted);
+    transition:transform .2s ease;
+    font-size:13px;
+  }
+  .accordion[open] summary .chevron{transform:rotate(90deg);}
+  .accordion .body{
+    padding:0 18px 20px;
+    color:var(--text);
+    font-size:14.5px;
+    line-height:1.7;
+  }
+  .accordion .body p{margin:0 0 12px;}
+  .accordion .body ul{margin:0 0 12px; padding-left:20px;}
+  .accordion .body li{margin-bottom:6px;}
+
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:10px 0 16px;
+    font-size:13.5px;
+  }
+  th, td{
+    text-align:left;
+    padding:8px 10px;
+    border-bottom:1px solid var(--line);
+  }
+  th{
+    color:var(--muted);
+    font-family:'Space Grotesk';
+    font-weight:600;
+    font-size:12.5px;
+  }
+  td.v{color:var(--amber);}
+
+  .warn{
+    background:rgba(242,121,90,0.09);
+    border-left:3px solid var(--block);
+    padding:10px 14px;
+    border-radius:0 6px 6px 0;
+    font-size:13.5px;
+    color:#F3C9BC;
+    margin:10px 0 16px;
+  }
+  .ok{
+    background:rgba(79,209,197,0.09);
+    border-left:3px solid var(--allow);
+    padding:10px 14px;
+    border-radius:0 6px 6px 0;
+    font-size:13.5px;
+    color:#BFEEE9;
+    margin:10px 0 16px;
+  }
+
+  .rule-row{
+    display:grid;
+    grid-template-columns:70px 60px 60px 1fr 90px;
+    gap:6px;
+    padding:8px 10px;
+    border-radius:5px;
+    font-size:13px;
+    align-items:center;
+  }
+  .rule-row.head{color:var(--muted); font-family:'Space Grotesk'; font-size:12px;}
+  .rule-row.allow{background:rgba(79,209,197,0.08);}
+  .rule-row.block{background:rgba(242,121,90,0.08); text-decoration:line-through; opacity:0.7;}
+  .rule-row .pill{
+    font-size:11px;
+    padding:2px 7px;
+    border-radius:20px;
+    text-align:center;
+  }
+  .pill.open{background:var(--allow); color:#08211D;}
+  .pill.closed{background:var(--block); color:#331209;}
+
+  .calc{
+    background:rgba(255,255,255,0.03);
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:16px 18px;
+    margin:16px 0 6px;
+  }
+  .calc label{
+    display:block;
+    font-size:12.5px;
+    color:var(--muted);
+    margin-bottom:6px;
+  }
+  .calc input[type=text]{
+    width:100%;
+    background:var(--bg);
+    border:1px solid var(--line);
+    color:var(--text);
+    font-family:'JetBrains Mono', monospace;
+    padding:9px 10px;
+    border-radius:5px;
+    font-size:14px;
+  }
+  .calc input[type=text]:focus{outline:1.5px solid var(--allow);}
+  .calc-result{
+    margin-top:10px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:13.5px;
+    color:var(--amber);
+    min-height:20px;
+  }
+  .calc button{
+    margin-top:10px;
+    background:var(--allow);
+    color:#08211D;
+    border:none;
+    padding:8px 16px;
+    border-radius:5px;
+    font-family:'Space Grotesk';
+    font-weight:600;
+    font-size:13.5px;
+    cursor:pointer;
+  }
+  .calc button:hover{filter:brightness(1.08);}
+
+  .flow{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    flex-wrap:wrap;
+    margin:14px 0 18px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:12.5px;
+  }
+  .flow .box{
+    background:var(--bg);
+    border:1px solid var(--line);
+    padding:8px 12px;
+    border-radius:5px;
+    color:var(--text);
+  }
+  .flow .arrow{color:var(--muted);}
+
+  .protocols{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:14px;
+    margin:16px 0 20px;
+  }
+  .proto-card{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:16px;
+  }
+  .proto-card h4{
+    margin:0 0 8px;
+    font-size:15px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .proto-card .dot{width:9px; height:9px; border-radius:50%; display:inline-block;}
+  .proto-card p{
+    margin:0;
+    font-size:13px;
+    color:var(--muted);
+    line-height:1.55;
+  }
+  .proto-card .meta{
+    margin-top:10px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:11.5px;
+    color:var(--amber);
+  }
+
+  .checklist{list-style:none; padding:0; margin:0 0 10px;}
+  .checklist li{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:8px 4px;
+    border-bottom:1px solid var(--grid);
+    font-size:13.5px;
+  }
+  .checklist input{accent-color:var(--allow); width:16px; height:16px;}
+  .checklist span.struck{text-decoration:line-through; color:var(--muted);}
+
+  footer{
+    max-width:920px;
+    margin:24px auto 0;
+    padding:0 24px;
+    color:var(--muted);
+    font-size:12px;
+    text-align:center;
+  }
+
+  @media(max-width:600px){
+    main{padding:20px 16px 8px;}
+    .rule-row{grid-template-columns:56px 46px 46px 1fr 70px; font-size:11.5px;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="kicker">CSAI321 · field notes</div>
+  <h1>AWS Networking, decoded</h1>
+  <p>Three labs, one recurring shape: build a network boundary, cut a hole in it on purpose, then prove the hole is exactly as big as it should be. Click through the tabs below — every part expands, and two calculators check your math live.</p>
+</header>
+
+<nav class="tabs">
+  <button class="tab-btn active" data-tab="q1">Q1 <span>·</span> Custom VPC</button>
+  <button class="tab-btn" data-tab="q3">Q3 <span>·</span> Web Server Firewall</button>
+  <button class="tab-btn" data-tab="lab4">Lab 4 <span>·</span> HTTP/1.1 → /3</button>
+</nav>
+
+<main>
+
+  <!-- ===================== Q1 ===================== -->
+  <section class="panel active" id="q1">
+    <p class="lede">A VPC you build by hand, not the default one AWS hands you. One instance ends up reachable over SSH — nothing else runs on it. The grader only sees resources carrying one tag.</p>
+
+    <div class="tagbox">
+      <span class="label">Mandatory tag on every resource:</span>
+      <code>csai321:lab</code> = <code>vpc-reach</code>
+    </div>
+
+    <div class="flow">
+      <div class="box">VPC 10.20.0.0/16</div><span class="arrow">→</span>
+      <div class="box">subnet-a · 10.20.1.0/24 · 1a</div><span class="arrow">＋</span>
+      <div class="box">subnet-b · 10.20.2.0/24 · 1b</div><span class="arrow">→</span>
+      <div class="box">igw-lab</div><span class="arrow">→</span>
+      <div class="box">rt-public → 0.0.0.0/0</div><span class="arrow">→</span>
+      <div class="box">ec2-lab</div>
+    </div>
+
+    <details class="accordion" open>
+      <summary><span>Part A — VPC &amp; subnets</span><span class="marks">7 marks</span><span class="chevron">▸</span></summary>
+      <div class="body">
+        <table>
+          <tr><th>Resource</th><th>Name</th><th>Value</th></tr>
+          <tr><td>VPC</td><td class="v">vpc-lab</td><td>10.20.0.0/16, no IPv6, default tenancy</td></tr>
+          <tr><td>Subnet</td><td class="v">subnet-a</td><td>10.20.1.0/24 · us-east-1a · auto-assign public IPv4 <b>enabled</b></td></tr>
+          <tr><td>Subnet</td><td class="v">subnet-b</td><td>10.20.2.0/24 · us-east-1b · auto-assign <b>disabled</b></td></tr>
+        </table>
+        <p><strong>subnet-b stays empty on purpose</strong> — it only exists to prove two subnets sit in two distinct Availability Zones inside one region.</p>
+        <div class="ok">The VPC wizard can stamp the tag on everything it creates in one pass — use it, then check each resource individually anyway.</div>
+      </div>
+    </details>
+
+    <details class="accordion">
+      <summary><span>Part B — Internet gateway &amp; routing</span><span class="marks">4 marks</span><span class="chevron">▸</span></summary>
+      <div class="body">
+        <ul>
+          <li>Create <code>igw-lab</code>, then attach it to <code>vpc-lab</code>.</li>
+          <li>Create route table <code>rt-public</code> in <code>vpc-lab</code>, add route <code>0.0.0.0/0 → igw-lab</code>.</li>
+          <li>Associate <strong>subnet-a only</strong>. subnet-b must stay on the main (default) route table.</li>
+        </ul>
+        <div class="warn">The route table is the resource people forget to tag. Untagged = invisible to the grader, and a subnet with no visible routing reads as private — that silently costs the Part B marks even though the build looks fine in the console.</div>
+      </div>
+    </details>
+
+    <details class="accordion">
+      <summary><span>Part C — Security group</span><span class="marks">3 marks</span><span class="chevron">▸</span></summary>
+      <div class="body">
+        <table>
+          <tr><th>Field</th><th>Value</th></tr>
+          <tr><td>Name</td><td class="v">admin-sg</td></tr>
+          <tr><td>Description</td><td class="v">csai321 admin access</td></tr>
+          <tr><td>Inbound</td><td class="v">SSH · TCP · 22 · My IP only</td></tr>
+        </table>
+        <div class="warn">Names starting with <code>sg-</code> are rejected — that prefix is reserved for security group IDs, which is why it's <code>admin-sg</code>, not <code>sg-admin</code>. It also can't be renamed after creation.</div>
+        <p>Exactly <strong>one</strong> inbound rule, source must resolve to a single <code>/32</code>. Open to <code>0.0.0.0/0</code>, or a second rule of any kind, scores zero for this part.</p>
+      </div>
+    </details>
+
+    <details class="accordion">
+      <summary><span>Part D — EC2 instance</span><span class="marks">5 marks</span><span class="chevron">▸</span></summary>
+      <div class="body">
+        <table>
+          <tr><th>Field</th><th>Value</th></tr>
+          <tr><td>Name</td><td class="v">ec2-lab</td></tr>
+          <tr><td>AMI / type</td><td class="v">Amazon Linux 2023 · t3.micro</td></tr>
+          <tr><td>Key pair</td><td class="v">key-lab (new, RSA, .pem)</td></tr>
+          <tr><td>Placement</td><td class="v">vpc-lab → subnet-a, public IP enabled</td></tr>
+          <tr><td>Security group</td><td class="v">admin-sg (existing)</td></tr>
+        </table>
+        <p>Confirm on the instance detail page: a private IPv4 in <code>10.20.1.x</code> and a public IPv4. Optional check from your own terminal (not graded):</p>
+        <p><code>chmod 400 key-lab.pem</code><br><code>ssh -i key-lab.pem ec2-user@&lt;PUBLIC_IPv4&gt;</code></p>
+        <p>If it fails, suspect the route table association or a missing public IP first.</p>
+      </div>
+    </details>
+
+    <details class="accordion">
+      <summary><span>Part E — Concept tag</span><span class="marks">1 mark</span><span class="chevron">▸</span></summary>
+      <div class="body">
+        <p>Add <code>csai321:hosts</code> to <strong>vpc-lab only</strong> — the number of usable host addresses in <code>10.20.1.0/24</code>, digits only.</p>
+        <div class="calc">
+          <label>Enter the CIDR to check (e.g. 10.20.1.0/24)</label>
+          <input type="text" id="cidrInput" placeholder="10.20.1.0/24" value="10.20.1.0/24">
+          <button onclick="calcHosts()">Calculate usable hosts</button>
+          <div class="calc-result" id="cidrResult"></div>
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <!-- ===================== Q3 ===================== -->
+  <section class="panel" id="q3">
+    <p class="lede">No custom network this time — the default VPC already exists. The whole exercise is one firewall and one instance behind it: public on the web ports, locked down on admin.</p>
+
+    <div class="tagbox">
+      <span class="label">Mandatory tag on both resources:</span>
+      <code>csai321:lab</code> = <code>ec2-firewall</code>
+    </div>
+
+    <details class="accordion" open>
+      <summary><span>Part A — Security group rules</span><span class="marks">9 marks</span><span class="chevron">▸</span></summary>
+      <div class="body">
+        <p>Name: <code class="v">web-sg</code> (again — never <code>sg-web</code>) · Description: <code>csai321 public web server</code> · in the default VPC.</p>
+        <p>Exactly three inbound rules, no more, no fewer:</p>
+        <div class="rule-row head"><div>Type</div><div>Proto</div><div>Port</div><div>Source</div><div>Status</div></div>
+        <div class="rule-row allow"><div>SSH</div><div>TCP</div><div>22</div><div>My IP (/32 only)</div><div class="pill open">admin-only</div></div>
+        <div class="rule-row allow"><div>HTTP</div><div>TCP</div><div>80</div><div>0.0.0.0/0</div><div class="pill open">public</div></div>
+        <div class="rule-row allow"><div>HTTPS</div><div>TCP</div><div>443</div><div>0.0.0.0/0</div><div class="pill open">public</div></div>
+        <div class="rule-row block"><div>SSH</div><div>TCP</div><div>22</div><div>0.0.0.0/0</div><div class="pill closed">never</div></div>
+        <div class="rule-row block"><div>Any</div><div>—</div><div>—</div><div>::/0 (IPv6)</div><div class="pill closed">counts as 4th rule</div></div>
+        <div class="warn">SSH open to the world scores zero for that item even though the server still works — an exposed admin port is the single most common way a lab instance gets compromised. Skip Anywhere-IPv6 entirely; it silently becomes a fourth rule and costs the rule-count mark.</div>
+        <p>Outbound stays at its default (all traffic allowed) — don't touch it.</p>
+      </div>
+    </details>
+
+    <details class="accordion">
+      <summary><span>Part B — The instance</span><span class="marks">5 marks</span><span class="chevron">▸</span></summary>
+      <div class="body">
+        <table>
+          <tr><th>Field</th><th>Value</th></tr>
+          <tr><td>Name</td><td class="v">web-server</td></tr>
+          <tr><td>AMI / type</td><td class="v">Amazon Linux 2023 · t3.micro</td></tr>
+          <tr><td>Key pair</td><td class="v">key-web (or none)</td></tr>
+          <tr><td>Network</td><td class="v">default VPC, any default subnet, public IP enabled</td></tr>
+          <tr><td>Security group</td><td class="v">web-sg (existing)</td></tr>
+        </table>
+        <div class="warn">Launch exactly one instance named <code>web-server</code>. If an earlier attempt is still sitting around, terminate it first — two instances with the same name make grading ambiguous and the part scores zero.</div>
+      </div>
+    </details>
+
+    <details class="accordion">
+      <summary><span>Part C — Concept tag</span><span class="marks">1 mark</span><span class="chevron">▸</span></summary>
+      <div class="body">
+        <p>Add <code>csai321:defaultrules</code> to <strong>web-server</strong> — the number of inbound rules a brand-new security group has before you add any.</p>
+        <div class="calc">
+          <button onclick="revealDefaultRules()">Reveal the answer</button>
+          <div class="calc-result" id="defaultRulesResult"></div>
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <!-- ===================== LAB 4 ===================== -->
+  <section class="panel" id="lab4">
+    <p class="lede">One EC2 box, one HTML file, three different ways of shipping it to a browser. Same content, different transport — that's the entire point of the lab.</p>
+
+    <details class="accordion" open>
+      <summary><span>Launch &amp; connect</span><span class="chevron">▸</span></summary>
+      <div class="body">
+        <table>
+          <tr><th>Field</th><th>Value</th></tr>
+          <tr><td>Name</td><td class="v">my-web-server</td></tr>
+          <tr><td>AMI / type</td><td class="v">Amazon Linux 2023 · t2.micro</td></tr>
+          <tr><td>Key pair</td><td class="v">vockey (pre-made, don't create a new one)</td></tr>
+          <tr><td>Network</td><td class="v">default VPC, no subnet preference, public IP enabled</td></tr>
+          <tr><td>Security group</td><td class="v">web-server-sg (new)</td></tr>
+        </table>
+        <p>Connect via <strong>EC2 Instance Connect</strong> (browser terminal, no download) first; fall back to SSH with the downloaded <code>labsuser.pem</code> only if that fails.</p>
+      </div>
+    </details>
+
+    <details class="accordion">
+      <summary><span>Security group — the full port map</span><span class="chevron">▸</span></summary>
+      <div class="body">
+        <div class="rule-row head"><div>Type</div><div>Proto</div><div>Port</div><div>Source</div><div>Feeds</div></div>
+        <div class="rule-row allow"><div>SSH</div><div>TCP</div><div>22</div><div>0.0.0.0/0</div><div class="pill open">terminal</div></div>
+        <div class="rule-row allow"><div>HTTP</div><div>TCP</div><div>80</div><div>0.0.0.0/0</div><div class="pill open">web</div></div>
+        <div class="rule-row allow"><div>HTTPS</div><div>TCP</div><div>443</div><div>0.0.0.0/0</div><div class="pill open">web (h2/h3)</div></div>
+        <div class="rule-row allow"><div>Custom</div><div>TCP</div><div>8080</div><div>0.0.0.0/0</div><div class="pill open">HTTP/1.1</div></div>
+        <div class="rule-row allow"><div>Custom</div><div>TCP</div><div>8443</div><div>0.0.0.0/0</div><div class="pill open">HTTP/2</div></div>
+        <div class="rule-row allow"><div>Custom</div><div>UDP</div><div>443</div><div>0.0.0.0/0</div><div class="pill open">QUIC/h3</div></div>
+        <div class="rule-row allow"><div>Custom</div><div>UDP</div><div>8443</div><div>0.0.0.0/0</div><div class="pill open">QUIC/h3</div></div>
+        <p style="margin-top:12px;">Note the shape here is the opposite of Q3's firewall lab: this one is wide open on purpose, because the goal is protocol experimentation, not access control.</p>
+      </div>
+    </details>
+
+    <details class="accordion">
+      <summary><span>The three servers, side by side</span><span class="chevron">▸</span></summary>
+      <div class="body">
+        <div class="protocols">
+          <div class="proto-card">
+            <h4><span class="dot" style="background:#8CA0B3;"></span>HTTP/1.1</h4>
+            <p>Python's built-in server. One request at a time per connection — the baseline everything else improves on.</p>
+            <div class="meta">python3 -m http.server 8080</div>
+            <div class="meta">DevTools protocol → http/1.1</div>
+          </div>
+          <div class="proto-card">
+            <h4><span class="dot" style="background:var(--allow);"></span>HTTP/2</h4>
+            <p>Hypercorn + Quart, over TLS. Multiplexes many requests on a single connection — always needs HTTPS, hence the self-signed cert.</p>
+            <div class="meta">hypercorn server:app --bind :443 --bind :8443</div>
+            <div class="meta">DevTools protocol → h2</div>
+          </div>
+          <div class="proto-card">
+            <h4><span class="dot" style="background:var(--amber);"></span>HTTP/3</h4>
+            <p>Same Hypercorn setup, plus aioquic. Runs over UDP (QUIC) instead of TCP — faster handshakes, no head-of-line blocking.</p>
+            <div class="meta">+ --quic-bind :443 --quic-bind :8443</div>
+            <div class="meta">DevTools protocol → h3 (often on reload #2)</div>
+          </div>
+        </div>
+        <p>The browser learns about QUIC from an <code>Alt-Svc</code> header sent inside the HTTP/2 response — that's why the very first load can still show <code>h2</code> before a reload flips to <code>h3</code>.</p>
+        <p>Sanity check from a second terminal: <code>sudo ss -ulnp | grep -E '443|8443'</code> should list both ports as UDP listeners.</p>
+      </div>
+    </details>
+
+    <details class="accordion">
+      <summary><span>Session checklist</span><span class="chevron">▸</span></summary>
+      <div class="body">
+        <ul class="checklist" id="checklistLab4">
+          <li><label><input type="checkbox">Instance running, 2/2 status checks passed</label></li>
+          <li><label><input type="checkbox">index.html created in ~/webserver</label></li>
+          <li><label><input type="checkbox">HTTP/1.1 confirmed on :8080, then stopped</label></li>
+          <li><label><input type="checkbox">Self-signed cert generated in ~/certs</label></li>
+          <li><label><input type="checkbox">HTTP/2 confirmed (h2) on :8443, then stopped</label></li>
+          <li><label><input type="checkbox">aioquic installed, HTTP/3 confirmed (h3) on reload</label></li>
+          <li><label><input type="checkbox">UDP listeners verified with ss -ulnp</label></li>
+        </ul>
+      </div>
+    </details>
+  </section>
+
+</main>
+
+<footer>Notes distilled from CSAI321 Q1, Q3, and Lab 4 — check each source document for full grading detail before submitting.</footer>
+
+<script>
+  document.querySelectorAll('.tab-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(btn.dataset.tab).classList.add('active');
+    });
+  });
+
+  document.querySelectorAll('.checklist input').forEach(cb=>{
+    cb.addEventListener('change', ()=>{
+      const span = cb.closest('label');
+      span.style.color = cb.checked ? 'var(--muted)' : '';
+      span.style.textDecoration = cb.checked ? 'line-through' : 'none';
+    });
+  });
+
+  function calcHosts(){
+    const raw = document.getElementById('cidrInput').value.trim();
+    const result = document.getElementById('cidrResult');
+    const m = raw.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})\/(\d{1,2})$/);
+    if(!m){
+      result.textContent = 'Enter a valid CIDR, e.g. 10.20.1.0/24';
+      result.style.color = 'var(--block)';
+      return;
+    }
+    const prefix = parseInt(m[5], 10);
+    if(prefix < 0 || prefix > 32){
+      result.textContent = 'Prefix must be between /0 and /32';
+      result.style.color = 'var(--block)';
+      return;
+    }
+    const hostBits = 32 - prefix;
+    let total = Math.pow(2, hostBits);
+    let usable = total - 2; // network + broadcast reserved
+    if(hostBits === 0){ usable = 1; }
+    if(hostBits === 1){ usable = 0; }
+    result.style.color = 'var(--amber)';
+    result.textContent = `/${prefix} → ${total} total addresses → ${usable} usable hosts (AWS also reserves 5 addresses per subnet for its own use, but the "usable host addresses" answer expected here is the standard ${usable}).`;
+  }
+
+  function revealDefaultRules(){
+    const result = document.getElementById('defaultRulesResult');
+    result.style.color = 'var(--amber)';
+    result.textContent = 'A brand-new security group starts with 0 inbound rules (outbound defaults to allow-all). So csai321:defaultrules = 0.';
+  }
+</script>
+
+</body>
+</html>
