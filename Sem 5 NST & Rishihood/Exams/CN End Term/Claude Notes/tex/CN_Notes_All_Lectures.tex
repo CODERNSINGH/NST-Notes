@@ -1,0 +1,34 @@
+\documentclass[11pt]{report}
+\input{preamble}
+\begin{document}
+\begin{titlepage}
+\centering
+\vspace*{3cm}
+{\Huge\bfseries\color{cnblue} CSAI321 Computer Networks\par}
+\vspace{0.6cm}
+{\LARGE Lecture Notes: Lectures 1--10\par}
+\vspace{0.8cm}
+{\large End-semester revision, explained simply with diagrams\par}
+\vspace{2cm}
+\begin{tikzpicture}[L/.style={draw,minimum width=55mm,minimum height=8mm,font=\bfseries}]
+  \node[L,fill=cnblue!30] at (0,0) {Application \small(L5--L8)};
+  \node[L,fill=cngreen!25] at (0,-0.8) {Transport \small(L9--L10)};
+  \node[L,fill=cnorange!25] at (0,-1.6) {Network};
+  \node[L,fill=cnpurple!20] at (0,-2.4) {Data Link};
+  \node[L,fill=gray!25] at (0,-3.2) {Physical};
+\end{tikzpicture}
+\vfill
+{\small Box legend: \textcolor{cnblue}{\textbf{Key idea}} \quad \textcolor{cngreen}{\textbf{Analogy}} \quad \textcolor{cnorange}{\textbf{Exam tip}} \quad \textcolor{cnpurple}{\textbf{Worked example}} \quad \textbf{Quick revision}\par}
+\end{titlepage}
+\tableofcontents
+\input{lec01}
+\input{lec02}
+\input{lec03}
+\input{lec04}
+\input{lec05}
+\input{lec06}
+\input{lec07}
+\input{lec08}
+\input{lec09}
+\input{lec10}
+\end{document}

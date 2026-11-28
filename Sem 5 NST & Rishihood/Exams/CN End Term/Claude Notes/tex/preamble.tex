@@ -1,0 +1,53 @@
+% Shared preamble for CSAI321 Computer Networks notes
+\usepackage[a4paper,margin=2.2cm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb,pifont}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,shapes.symbols,shapes.geometric,positioning,shapes.geometric,shapes.misc,calc,fit,backgrounds,decorations.pathreplacing,matrix}
+\usepackage[most]{tcolorbox}
+\usepackage{booktabs,tabularx,array,longtable}
+\usepackage{enumitem}
+\usepackage{listings}
+\usepackage{hyperref}
+\usepackage{titlesec}
+\hypersetup{colorlinks=true,linkcolor=blue!50!black,urlcolor=blue!60!black}
+\setlist{itemsep=2pt,topsep=4pt}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{5pt}
+\renewcommand{\arraystretch}{1.3}
+
+\definecolor{cnblue}{HTML}{1F4E9A}
+\definecolor{cngreen}{HTML}{2E7D32}
+\definecolor{cnorange}{HTML}{E65100}
+\definecolor{cnpurple}{HTML}{6A1B9A}
+\definecolor{cnred}{HTML}{C62828}
+\definecolor{cngrey}{HTML}{F4F6FA}
+
+\titleformat{\section}{\Large\bfseries\color{cnblue}}{\thesection}{0.8em}{}
+\titleformat{\subsection}{\large\bfseries\color{cnblue!80!black}}{\thesubsection}{0.8em}{}
+
+\newtcolorbox{keyidea}[1][Key idea]{enhanced,breakable,colback=cnblue!5,colframe=cnblue,fonttitle=\bfseries,title={#1}}
+\newtcolorbox{analogy}[1][Analogy]{enhanced,breakable,colback=cngreen!5,colframe=cngreen,fonttitle=\bfseries,title={#1}}
+\newtcolorbox{examtip}[1][Exam tip]{enhanced,breakable,colback=cnorange!6,colframe=cnorange,fonttitle=\bfseries,title={#1}}
+\newtcolorbox{workedex}[1][Worked example]{enhanced,breakable,colback=cnpurple!4,colframe=cnpurple,fonttitle=\bfseries,title={#1}}
+\newtcolorbox{recap}[1][Quick revision]{enhanced,breakable,colback=cngrey,colframe=black!60,fonttitle=\bfseries,title={#1}}
+
+\lstset{basicstyle=\ttfamily\small,backgroundcolor=\color{cngrey},frame=single,rulecolor=\color{black!25},columns=fullflexible,breaklines=true,keepspaces=true}
+
+% TikZ styles
+\tikzset{
+  box/.style={draw,rounded corners=3pt,minimum height=8mm,minimum width=22mm,align=center,font=\small},
+  host/.style={draw,fill=cnblue!10,rounded corners=2pt,minimum width=14mm,minimum height=9mm,align=center,font=\small},
+  srv/.style={draw,fill=cngreen!12,rounded corners=2pt,minimum width=14mm,minimum height=11mm,align=center,font=\small},
+  rtr/.style={draw,circle,fill=cnorange!15,minimum size=9mm,font=\small,inner sep=1pt},
+  arr/.style={-{Stealth[length=2.5mm]},thick},
+  darr/.style={{Stealth[length=2.5mm]}-{Stealth[length=2.5mm]},thick},
+  msg/.style={-{Stealth[length=2mm]},thick,every node/.append style={fill=white,inner sep=1.2pt,sloped}},
+  lbl/.style={font=\footnotesize,fill=white,inner sep=1pt},
+}
+% sequence-diagram helper: \lifelines{x1}{x2}{top}{bottom}
+\newcommand{\lifelines}[4]{\draw[dashed,gray] (#1,#3) -- (#1,#4); \draw[dashed,gray] (#2,#3) -- (#2,#4);}
+\titleformat{\chapter}[display]{\bfseries\color{cnblue}}{\large CSAI321 Computer Networks \textbullet{} Notes}{4pt}{\Huge}[\vspace{2pt}{\color{cnblue}\titlerule[1.2pt]}]
+\titlespacing*{\chapter}{0pt}{-25pt}{18pt}

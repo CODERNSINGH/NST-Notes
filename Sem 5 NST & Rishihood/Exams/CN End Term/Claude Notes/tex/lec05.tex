@@ -1,0 +1,352 @@
+\chapter{Lecture 5 --- Application Layer: Architecture, Protocols and APIs}
+
+\begin{keyidea}[The one idea from this lecture]
+The \textbf{application layer} is where programs (browsers, email apps) meet the network. Its most important protocol is \textbf{HTTP}: a simple, \textbf{stateless request--response} protocol. HTTP has evolved (1.0 $\to$ 1.1 $\to$ 2 $\to$ 3) mainly to fight one enemy: \textbf{head-of-line blocking}. Finally, apps talk to other apps through \textbf{APIs}, most commonly \textbf{REST} APIs.
+\end{keyidea}
+
+\textbf{Roadmap:} Network architectures $\cdot$ Application layer $\cdot$ HTTP $\cdot$ HTTP methods $\cdot$ Evolution of HTTP $\cdot$ Head-of-Line blocking $\cdot$ HTTP/2 and HTTP/3 $\cdot$ REST principles.
+
+\section{Network architectures}
+
+\begin{center}
+\begin{tikzpicture}
+  \begin{scope}
+    \node[srv,minimum width=16mm] (s) at (0,0) {Server};
+    \foreach \a [count=\i] in {90,150,210,270,330,30} { \node[host,minimum width=10mm,minimum height=6mm,font=\scriptsize] (c\i) at (\a:1.9) {client}; \draw[darr] (c\i) -- (s); }
+    \node[font=\small\bfseries] at (0,-2.6) {Client/Server (centralised)};
+  \end{scope}
+  \begin{scope}[xshift=7.5cm]
+    \foreach \a [count=\i] in {45,135,225,315} \node[host,minimum width=10mm,minimum height=6mm,font=\scriptsize] (p\i) at (\a:1.8) {peer};
+    \foreach \i in {1,...,4} \foreach \j in {1,...,4} { \ifnum\i<\j \draw[darr] (p\i) -- (p\j); \fi }
+    \node[font=\small\bfseries] at (0,-2.6) {Peer-to-Peer (decentralised)};
+  \end{scope}
+\end{tikzpicture}
+\end{center}
+
+\begin{itemize}
+  \item \textbf{Client/Server:} centralised. Powerful \textbf{servers} store data and process requests for many dependent \textbf{clients}. (Example: a browser and a web server.)
+  \item \textbf{Peer-to-Peer (P2P):} decentralised. All devices (``peers'') act as \textbf{both clients and servers} with equal privileges. (Example: BitTorrent-style file sharing.)
+\end{itemize}
+Next question: \emph{how do these systems actually talk over the network?} A client sends a \textbf{request} over a \textbf{connection}, the server sends a \textbf{response}.
+
+\section{The application layer}
+\textbf{Recap:} in the 7-layer OSI stack the sender's data goes \textbf{down} the layers (Application $\to$ Physical), across the physical link, and \textbf{up} the receiver's layers. The application layer is at the very top.
+
+The \textbf{Application Layer (Layer 7)} is the direct interface between software programs (web browsers, email clients) and the underlying network. It interprets user commands and enables data exchange across systems.
+
+\textbf{Application layer protocols} (one for each kind of job):
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+Job & Protocol \\
+\midrule
+Web surfing & HTTP / HTTPS \\
+File transfer & FTP \\
+Emails & SMTP (and POP3/IMAP --- Lecture 7) \\
+Virtual terminals (remote login) & Telnet (and SSH) \\
+Names $\to$ addresses & DNS (Lecture 8) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{HTTP --- the web's language}
+
+\textbf{HTTP (HyperText Transfer Protocol)} is a \textbf{stateless request--response} protocol (running over TCP).
+\begin{itemize}
+  \item The client (browser) sends a \textbf{REQUEST} to a server.
+  \item The server processes it and sends back a \textbf{RESPONSE}.
+  \item Each exchange is \textbf{independent} --- the server \textbf{remembers nothing} between requests (that's what \emph{stateless} means).
+\end{itemize}
+
+\begin{center}
+\begin{tikzpicture}
+  \node[font=\bfseries] at (0,0.4) {Client}; \node[font=\bfseries] at (9,0.4) {Server};
+  \lifelines{0}{9}{0}{-3.6}
+  \draw[msg,cngreen] (0,-0.4) -- node[above,font=\small]{1. open connection (TCP)} (9,-0.9);
+  \draw[msg,cnblue] (0,-1.3) -- node[above,font=\small]{2. HTTP request} (9,-1.8);
+  \draw[msg,cnorange] (9,-2.2) -- node[above,font=\small]{3. HTTP response} (0,-2.7);
+  \draw[msg,gray] (0,-3.0) -- node[above,font=\small]{4. close} (9,-3.5);
+\end{tikzpicture}
+\end{center}
+
+\subsection{Structure of an HTTP message}
+Both requests and responses have the same three-part shape:
+\begin{center}
+\begin{tikzpicture}[r/.style={draw,minimum width=50mm,minimum height=7mm,font=\small}]
+  \node[r,fill=cnorange!25] (a) at (0,0) {Request line \emph{or} Status line};
+  \node[r,fill=cnblue!15,below=0mm of a] (b) {Headers};
+  \node[r,fill=white,below=0mm of b,minimum height=4mm,font=\scriptsize] (e) {(empty line)};
+  \node[r,fill=cngreen!15,below=0mm of e] (c) {Body (optional)};
+\end{tikzpicture}
+\end{center}
+
+\subsection{The HTTP request}
+\begin{lstlisting}
+GET /index.html HTTP/1.1          <- request line
+Host: example.com                 <- headers
+User-Agent: Chrome
+Accept-Language: en-us
+                                  <- empty line
+(body: optional, e.g. form data or JSON for POST/PUT)
+\end{lstlisting}
+
+\textbf{1. Request line} --- three parts:
+\begin{itemize}
+  \item \textbf{Method:} the operation the client wants (GET, POST, PUT, DELETE, \ldots).
+  \item \textbf{URL:} the resource/endpoint requested (e.g.\ \texttt{/index.html}, \texttt{/api/data}).
+  \item \textbf{HTTP version:} e.g.\ \texttt{HTTP/1.1} or \texttt{HTTP/2}.
+\end{itemize}
+
+\textbf{2. Headers} --- extra information about the request or about the client's capabilities:
+\begin{itemize}
+  \item \texttt{User-Agent}: the client software (browser, app, \ldots).
+  \item \texttt{Host}: the domain name of the server.
+  \item \texttt{Content-Type}: type of data the client is sending (for POST/PUT).
+  \item \texttt{Accept}: types of data the client can handle (e.g.\ \texttt{text/html}, \texttt{application/json}).
+\end{itemize}
+
+\textbf{3. Body (optional)} --- the actual data sent by the client (form data, JSON payload). Only for methods like \textbf{POST, PUT, PATCH}. Example:
+\begin{lstlisting}
+{ "username": "user1", "password": "password123" }
+\end{lstlisting}
+
+\subsection{HTTP methods overview}
+\begin{center}
+\begin{tabularx}{\textwidth}{>{\ttfamily\bfseries}l X l}
+\toprule
+\textrm{Method} & Meaning & Has body? \\
+\midrule
+GET & Read / fetch a resource & No \\
+POST & Create something new / submit data & Yes \\
+PUT & Replace / update a resource & Yes \\
+PATCH & Partially update a resource & Yes \\
+DELETE & Remove a resource & Usually no \\
+HEAD & Like GET but only headers, no body & No \\
+OPTIONS & Ask which methods the server supports & No \\
+\bottomrule
+\end{tabularx}
+\end{center}
+\textbf{Safe methods} (do not change server state): GET, HEAD, OPTIONS. POST/PUT/DELETE have \textbf{side effects}.
+
+\subsection{The HTTP response}
+\begin{lstlisting}
+HTTP/1.1 200 OK                   <- status line
+Content-Type: text/html           <- headers
+Content-Length: 88
+Server: Apache/2.4.2
+                                  <- empty line
+<html><body><h1>Welcome to Example.com</h1></body></html>   <- body
+\end{lstlisting}
+
+\textbf{1. Status line:} HTTP version + \textbf{status code} (3 digits) + \textbf{status message} (short text). Example: \texttt{HTTP/1.1 200 OK}.
+
+\textbf{2. Headers} (metadata about the response):
+\texttt{Content-Type} (type of body, e.g.\ \texttt{text/html}, \texttt{application/json}), \texttt{Content-Length} (body length in bytes), \texttt{Server} (server software), \texttt{Date} (when the response was sent).
+
+\textbf{3. Body:} the actual data returned (HTML, JSON, an image, \ldots).
+
+\subsection{HTTP status codes}
+\begin{center}
+\begin{tabularx}{\textwidth}{l l X}
+\toprule
+Class & Meaning & Examples from the lecture \\
+\midrule
+1xx & Informational & --- \\
+2xx & Success & \textbf{200 OK} --- request succeeded, resource returned \\
+3xx & Redirection & \textbf{301 Moved Permanently} --- resource has a new URL for good;\newline \textbf{302 Found} --- temporary redirect \\
+4xx & Client error & \textbf{403 Forbidden} --- understood but not authorised;\newline \textbf{404 Not Found} --- resource doesn't exist \\
+5xx & Server error & \textbf{500 Internal Server Error} --- server crashed / failed \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection{If HTTP is stateless, how does your shopping cart stay full?}
+\textbf{Cookies and session tokens!} The server gives the browser a small token (cookie). The browser sends it back with every later request, so the server can recognise ``this is the same user'' even though HTTP itself remembers nothing.
+
+\begin{center}
+\begin{tikzpicture}
+  \node[font=\bfseries] at (0,0.4) {Browser}; \node[font=\bfseries] at (10,0.4) {Server};
+  \lifelines{0}{10}{0}{-2.8}
+  \draw[msg] (0,-0.3) -- node[above,font=\small]{POST /cart (add shirt)} (10,-0.7);
+  \draw[msg,cnorange] (10,-1.0) -- node[above,font=\small]{200 OK \quad Set-Cookie: session=abc123} (0,-1.4);
+  \draw[msg] (0,-1.8) -- node[above,font=\small]{GET /cart \quad Cookie: session=abc123} (10,-2.2);
+  \node[font=\scriptsize,align=left,anchor=west] at (10.2,-2.2) {``Oh, it's you ---\\here's your cart''};
+\end{tikzpicture}
+\end{center}
+
+\section{HTTP generations: from HTTP/1.0 to HTTP/3}
+
+\begin{analogy}[The online shopping delivery problem]
+You order an outfit online: \textbf{shirt, pants, shoes and socks}. These are like the \textbf{HTML, CSS, JS and images} a web page requests from the server. How would you prefer them delivered? Your preference is the ``why'' behind every new HTTP version.
+\end{analogy}
+
+\subsection{HTTP/1.0 (1996) --- one item per trip}
+\textbf{Analogy:} the truck can carry only one item per trip and must return to HQ before delivering the next. A massive waste of time.
+\begin{itemize}
+  \item One request at a time.
+  \item Every file (HTML, image, CSS) = a \textbf{new TCP connection}.
+  \item \textbf{No persistent} TCP connection $\Rightarrow$ slow, repetitive, inefficient (each new connection costs a handshake).
+\end{itemize}
+
+\subsection{HTTP/1.1 (1997) --- the one-truck convoy (Keep-Alive)}
+\textbf{Analogy:} the truck arrives with all four items but unloads them one by one.
+\begin{itemize}
+  \item Introduced \textbf{Keep-Alive (persistent) connections}: many requests reuse one TCP connection.
+  \item Introduced \textbf{caching} and the \textbf{Host header}.
+  \item Better performance, but suffered from \textbf{head-of-line (HoL) blocking}.
+\end{itemize}
+
+\textbf{HTTP/1.1 pipelining (optional):}
+\begin{itemize}
+  \item Client can send multiple requests without waiting for each response.
+  \item But responses must come back \textbf{in the same order} as requests (\textbf{FIFO} --- First In, First Out).
+  \item Only \textbf{safe} methods can be pipelined (GET, HEAD, OPTIONS). Not POST/PUT, which have side effects.
+\end{itemize}
+
+\begin{keyidea}[Head-of-Line (HoL) blocking]
+On one connection, responses must leave \textbf{in order}. If the first response (a slow image) is not ready, everything behind it (CSS, JS, icon) is \textbf{blocked}, even though they are ready. Like a queue at a shop where the first customer is still searching for their wallet.
+\end{keyidea}
+
+\begin{center}
+\begin{tikzpicture}
+  \draw[thick] (0,0) rectangle (10,1);
+  \node[font=\scriptsize,anchor=west] at (0,1.25) {ONE CONNECTION --- responses must exit in order (FIFO) $\rightarrow$};
+  \node[draw,fill=cnred!40,minimum width=24mm,minimum height=7mm,font=\small] at (8.5,0.5) {slow image \ldots};
+  \node[draw,fill=cngreen!30,minimum width=12mm,minimum height=7mm,font=\small] at (6.2,0.5) {CSS};
+  \node[draw,fill=cngreen!30,minimum width=12mm,minimum height=7mm,font=\small] at (4.8,0.5) {JS};
+  \node[draw,fill=cngreen!30,minimum width=12mm,minimum height=7mm,font=\small] at (3.4,0.5) {icon};
+  \node[font=\scriptsize,cnred] at (4.8,-0.3) {all blocked, even though they're ready};
+  \draw[arr] (10,0.5) -- (11,0.5);
+\end{tikzpicture}
+\end{center}
+Browsers ``faked'' parallelism by opening about \textbf{6 separate TCP connections} per site --- costly: 6$\times$ setup, 6$\times$ overhead.
+
+\subsection{HTTP/2 (2015) --- serve the whole tray}
+\textbf{Analogy:} instead of serving your meal dish by dish, the waiter brings the entire tray and you choose what to eat.
+
+HTTP/2 is the second major version, aimed at better performance by fixing HTTP/1.1's limits:
+\begin{itemize}
+  \item Uses a \textbf{single TCP connection}.
+  \item \textbf{Binary protocol:} messages are encoded in a binary format (the \textbf{framing layer}), unlike text-based HTTP/1.x.
+  \item \textbf{Multiplexing:} many requests and responses travel \textbf{simultaneously} over one connection as interleaved \textbf{streams}.
+  \item \textbf{Server push:} the server can send resources \textbf{before the client asks} (e.g.\ send the CSS along with the HTML).
+\end{itemize}
+
+\begin{center}
+\begin{tikzpicture}
+  \draw[thick] (0,0) rectangle (10,1);
+  \node[font=\scriptsize,anchor=west] at (0,1.25) {ONE TCP CONNECTION --- frames from different streams interleaved};
+  \foreach \x/\c/\t in {0.6/cnblue/1,1.4/cngreen/2,2.2/cnorange/3,3.0/cnblue/1,3.8/cnpurple/4,4.6/cngreen/2,5.4/cnorange/3,6.2/cnblue/1,7.0/cnpurple/4,7.8/cngreen/2,8.6/cnorange/3,9.4/cnpurple/4}
+    \node[draw,fill=\c!40,minimum width=7mm,minimum height=6mm,font=\scriptsize] at (\x,0.5) {S\t};
+\end{tikzpicture}
+\end{center}
+
+\textbf{But} HoL blocking still exists at the \textbf{TCP level}: TCP delivers bytes strictly in order, so if \textbf{one TCP segment is lost}, \textbf{all streams wait} until it's retransmitted.
+
+\subsection{HTTP/3 with QUIC (June 2022)}
+\textbf{Analogy:} you order 3 items in a restaurant and each item has its \textbf{own kitchen window and dedicated staff}. A delay in one dish doesn't hold up the others.
+\begin{itemize}
+  \item Latest version of HTTP.
+  \item Built on \textbf{QUIC}, a \textbf{UDP-based} transport protocol developed by \textbf{Google}, instead of TCP.
+  \item \textbf{Multiplexed streams without blocking} --- streams are truly independent.
+  \item Designed to \textbf{solve head-of-line blocking}. TLS (encryption) is built into QUIC.
+\end{itemize}
+
+\begin{center}
+\begin{tikzpicture}[b/.style={draw,minimum width=30mm,minimum height=6.5mm,font=\small}]
+  \node[font=\small\bfseries] at (0,0.6) {HTTP/2 stack};
+  \node[b,fill=cnblue!20] (a1) at (0,0) {HTTP/2};
+  \node[b,fill=cnblue!10,below=0mm of a1] (a2) {TLS};
+  \node[b,fill=cngreen!25,below=0mm of a2] (a3) {TCP};
+  \node[b,fill=gray!20,below=0mm of a3] (a4) {IP};
+  \node[font=\small\bfseries] at (5,0.6) {HTTP/3 stack};
+  \node[b,fill=cnblue!20] (b1) at (5,0) {HTTP/3};
+  \node[b,fill=cnorange!25,below=0mm of b1,minimum height=13mm,align=center] (b2) {QUIC\\\scriptsize(streams + TLS built in)};
+  \node[b,fill=cngreen!25,below=0mm of b2] (b3) {UDP};
+  \node[b,fill=gray!20,below=0mm of b3] (b4) {IP};
+\end{tikzpicture}
+\end{center}
+
+\subsection{Transition summary}
+\begin{center}
+\begin{tabularx}{\textwidth}{X X X}
+\toprule
+\textbf{HTTP/1.1} & \textbf{HTTP/2} & \textbf{HTTP/3} \\
+\midrule
+6 separate TCP connections to fake parallelism & Many streams multiplexed on one TCP connection & QUIC over UDP --- truly independent streams \\
+Costly: 6$\times$ setup, 6$\times$ overhead & App-level HoL fixed; \textbf{TCP-level HoL remains}: 1 lost segment $\Rightarrow$ all streams stall & Loss is isolated to its own stream; only that stream waits \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{center}
+\begin{tabular}{llll}
+\toprule
+Version & Year & Big idea & Remaining problem \\
+\midrule
+HTTP/1.0 & 1996 & one request per connection & very slow \\
+HTTP/1.1 & 1997 & keep-alive, pipelining, Host header & HoL blocking (app level) \\
+HTTP/2 & 2015 & binary, multiplexing, server push & HoL at TCP level \\
+HTTP/3 & 2022 & QUIC over UDP & --- (solves HoL) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{APIs and REST}
+We understand client--server, where a browser asks a server for a page. But what happens when an \textbf{application needs to talk to another application}? It uses an \textbf{API}.
+
+\subsection{REST APIs}
+\textbf{REST} (REpresentational State Transfer) is the most popular style of web API: a Q4 2024 analysis estimated \textbf{83\% of all public APIs use REST}.
+
+\textbf{REST basics:} the client sends HTTP requests (GET, POST, PUT, PATCH, DELETE) to a URL (an \emph{endpoint} that names a \emph{resource}); the REST API talks to the database and sends back a response, typically in \textbf{JSON} (or XML).
+
+\begin{center}
+\begin{tikzpicture}
+  \node[host,minimum width=18mm] (c) at (0,0) {Client\\\scriptsize(app)};
+  \node[draw,fill=cnpurple!20,minimum width=20mm,minimum height=12mm,align=center] (api) at (6.5,0) {REST API\\\scriptsize(server)};
+  \node[draw,cylinder,shape border rotate=90,aspect=0.25,fill=cngreen!20,minimum height=12mm,minimum width=12mm] (db) at (10.5,0) {DB};
+  \draw[msg] ([yshift=3mm]c.east) -- node[above,font=\scriptsize]{GET /users/42} ([yshift=3mm]api.west);
+  \draw[msg,cnorange] ([yshift=-3mm]api.west) -- node[below,font=\scriptsize]{200 OK \{"id":42,"name":"Asha"\}} ([yshift=-3mm]c.east);
+  \draw[darr] (api) -- node[above,font=\scriptsize]{query} (db);
+\end{tikzpicture}
+\end{center}
+
+\textbf{REST principles} (the rules that make an API ``RESTful''):
+\begin{itemize}
+  \item \textbf{Client--server:} client and server are separate; they only share the API contract.
+  \item \textbf{Stateless:} every request carries all information needed --- the server keeps no session memory (just like HTTP).
+  \item \textbf{Resources identified by URLs:} e.g.\ \texttt{/users}, \texttt{/users/42}.
+  \item \textbf{Uniform interface:} use standard HTTP methods for actions --- GET (read), POST (create), PUT/PATCH (update), DELETE (remove).
+  \item \textbf{Representations:} data is sent as JSON/XML.
+  \item \textbf{Cacheable:} responses say whether they can be cached.
+\end{itemize}
+
+\begin{center}
+\begin{tabular}{>{\ttfamily}l >{\ttfamily}l l}
+\toprule
+\textrm{Method} & \textrm{Endpoint} & Meaning \\
+\midrule
+GET & /users & list all users \\
+GET & /users/42 & read user 42 \\
+POST & /users & create a new user \\
+PUT & /users/42 & update user 42 \\
+DELETE & /users/42 & delete user 42 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Why use OpenAPI?}
+\textbf{OpenAPI} (Swagger) is a standard way to \textbf{describe} a REST API in a file --- its endpoints, methods, inputs and outputs. It acts as a \textbf{contract}: the \textbf{API producer} defines and publishes it; \textbf{API consumers} (front-end developers, third-party developers, AI agents, testing tools) read it to know exactly how to call the API. Demo: \url{https://petstore3.swagger.io}.
+
+\begin{recap}
+\begin{itemize}
+  \item Client/Server (central server) vs P2P (everyone is client and server).
+  \item Application layer (L7) = interface between apps and network. Protocols: HTTP(S), FTP, SMTP, Telnet, DNS.
+  \item HTTP is stateless request--response over TCP. Message = start line + headers + empty line + optional body.
+  \item Request line = Method + URL + Version. Status line = Version + Code + Message.
+  \item Codes: 200 OK, 301 permanent, 302 temporary, 403 forbidden, 404 not found, 500 server error.
+  \item State is added with cookies / session tokens.
+  \item 1.0: new connection per file. 1.1: keep-alive, pipelining (FIFO, safe methods), HoL blocking. 2: binary, multiplexing, server push, one TCP conn (TCP HoL remains). 3: QUIC over UDP, no HoL.
+  \item REST: stateless, resources as URLs, HTTP methods, JSON. 83\% of public APIs. OpenAPI = API contract.
+\end{itemize}
+\end{recap}

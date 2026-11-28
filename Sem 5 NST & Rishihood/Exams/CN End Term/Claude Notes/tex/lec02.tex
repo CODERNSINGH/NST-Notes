@@ -1,0 +1,261 @@
+\chapter{Lecture 2 --- Moving Data Through the Core}
+
+\begin{keyidea}[The one idea from this lecture]
+The internet does \textbf{not} reserve a private path for you. It chops your data into \textbf{packets} and lets everyone share the links on demand (\textbf{packet switching}). This is very efficient, but packets can be \textbf{delayed} or \textbf{lost}. We measure the cost with four kinds of \textbf{delay} and with \textbf{throughput}.
+\end{keyidea}
+
+\section{Recap of Lecture 1}
+\begin{itemize}
+  \item \textbf{The physical cloud:} millions of servers in data centres power our daily apps.
+  \item \textbf{Global infrastructure:} over 597 submarine cables link continents.
+  \item \textbf{The AI network era:} training modern AI uses ultra-fast networks to connect over 10{,}000 GPUs.
+\end{itemize}
+
+\section{A tale of two phone calls}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{X X}
+\toprule
+\textbf{The landline call (circuit switching)} & \textbf{The WhatsApp call (packet switching)} \\
+\midrule
+Grandma pauses for 10 seconds to think. The line's capacity sits \textbf{idle} --- reserved for her, but wasted. & You pause for 10 seconds. \textbf{No packets are sent}, so that capacity is free for someone else to use. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\section{Circuit switching --- the road not taken}
+
+The classic telephone model. Before the conversation starts, the network \textbf{reserves a dedicated end-to-end path} and keeps it, exclusively for you, for the whole call.
+
+\begin{center}
+\begin{tikzpicture}
+  \node[host] (a) {A};
+  \node[rtr,right=15mm of a] (s1) {S1};
+  \node[rtr,right=15mm of s1] (s2) {S2};
+  \node[host,right=15mm of s2] (b) {B};
+  \node[host,below=8mm of a] (c) {C};
+  \node[host,below=8mm of b] (d) {D};
+  \draw[line width=3pt,cnred] (a) -- (s1) -- (s2) -- (b);
+  \draw[thick,gray] (c) -- (s1); \draw[thick,gray] (s2) -- (d);
+  \node[above=2mm of s1,xshift=12mm,font=\small,cnred] {reserved for A$\leftrightarrow$B the whole call};
+  \node[below=1mm of s2,xshift=-12mm,font=\footnotesize,gray,yshift=-4mm] {C and D cannot use it, even in silence};
+\end{tikzpicture}
+\end{center}
+
+\begin{itemize}
+  \item \textbf{Good --- guaranteed:} once set up, the full capacity is yours. Predictable, stable, no surprises mid-call.
+  \item \textbf{Bad --- wasteful for bursty data:} go quiet for a few seconds and the reserved capacity sits idle, unusable by anyone else.
+\end{itemize}
+
+\section{Packet switching --- how the core really moves data}
+
+\subsection{What exactly is a packet?}
+\begin{itemize}
+  \item Your message (a photo, a webpage, a voice clip) is chopped into small, independent chunks called \textbf{packets}.
+  \item Each packet = \textbf{header} (addressing information) + \textbf{payload} (your actual data).
+  \item Packets can take \textbf{different routes} to the same destination.
+  \item The core forwards each packet independently, \textbf{hop by hop}, router to router.
+\end{itemize}
+
+\begin{center}
+\begin{tikzpicture}
+  \node[draw,fill=cnorange!25,minimum width=20mm,minimum height=8mm] (h) {Header};
+  \node[draw,fill=cnblue!12,minimum width=50mm,minimum height=8mm,right=0mm of h] (p) {Payload (your data)};
+  \node[below=1mm of h,font=\footnotesize] {who / where};
+  \node[below=1mm of p,font=\footnotesize] {what};
+\end{tikzpicture}
+\end{center}
+
+\subsection{The store-and-forward rule}
+A router must \textbf{receive the entire packet} before it sends even the first bit onward: receive fully $\to$ check $\to$ forward fully.
+
+\begin{center}
+\begin{tikzpicture}
+  \node[host] (s) {Source};
+  \node[rtr,right=25mm of s] (r) {Router};
+  \node[host,right=25mm of r] (d) {Dest.};
+  \draw[thick] (s) -- (r) -- (d);
+  \node[draw,fill=cnblue!20,minimum width=18mm,minimum height=5mm,above=2mm of r,font=\scriptsize] (buf) {whole packet in buffer};
+  \node[below=3mm of r,font=\footnotesize,align=center] {1. receive all bits\\2. check for errors\\3. then forward};
+\end{tikzpicture}
+\end{center}
+
+\textbf{Why it matters:} no single router needs to know the whole path. It only needs to know the \textbf{next hop}.
+
+\section{Statistical multiplexing --- sharing on demand}
+
+No reservations. Links are used only when packets actually need them. This one idea gives two ``superpowers'':
+
+\begin{itemize}
+  \item \textbf{Efficiency:} real traffic is \textbf{bursty} --- you are rarely sending every millisecond. Many users can share one link because it is statistically unlikely that they all burst at once.
+  \item \textbf{Resilience:} packets are not tied to one fixed path. If a link or router fails, traffic is simply \textbf{rerouted} around the damage --- nothing was ``reserved'' there to lose.
+\end{itemize}
+
+\begin{center}
+\begin{tikzpicture}
+  \foreach \i/\c in {0/cnblue,1/cngreen,2/cnorange,3/cnpurple} {
+    \node[host,minimum width=10mm] (u\i) at (0,-\i*1.0) {U\i};
+    \draw[thick,\c] (u\i.east) -- (2.2,-1.5);
+  }
+  \node[rtr] (m) at (2.6,-1.5) {R};
+  \draw[line width=2pt] (m) -- (8,-1.5);
+  \foreach \x/\c in {3.4/cnblue,4.1/cngreen,4.8/cnblue,5.5/cnpurple,6.2/cnorange,6.9/cngreen} \node[draw,fill=\c!50,minimum width=5mm,minimum height=4mm] at (\x,-1.5) {};
+  \node[font=\small,align=center] at (5.4,-0.9) {one shared link --- packets from different users interleave};
+\end{tikzpicture}
+\end{center}
+
+\subsection{The catch: no guarantees}
+Packet switching gives \textbf{no built-in guarantees}:
+\begin{itemize}
+  \item packets can be \textbf{delayed} behind others in a queue, or
+  \item \textbf{dropped} entirely when a router's buffer fills up under load.
+\end{itemize}
+
+\begin{keyidea}[This is the seed of everything TCP does]
+TCP (later lectures) exists to cover exactly this gap: it \textbf{detects loss, retransmits}, and \textbf{paces data}, so that an unreliable, best-effort core feels reliable to applications.
+\end{keyidea}
+
+\section{Sources of delay}
+
+\subsection{The toll-booth caravan analogy}
+Picture a caravan of cars arriving at a toll booth, then driving down a highway to the next toll booth. Each car passes the booth \textbf{one at a time} (fixed time each), then the cars drive the highway at the speed limit.
+
+\begin{center}
+\begin{tikzpicture}
+  \node[draw,fill=cnorange!25,minimum width=14mm,minimum height=10mm,align=center,font=\scriptsize] (t1) {TOLL\\BOOTH};
+  \node[draw,fill=cnorange!25,minimum width=14mm,minimum height=10mm,align=center,font=\scriptsize,right=70mm of t1] (t2) {TOLL\\BOOTH};
+  \draw[line width=6pt,gray!40] (t1.east) -- (t2.west);
+  \foreach \x in {-3.6,-3.0,-2.4} \node[draw,fill=cnblue!40,minimum width=5mm,minimum height=3mm] at (\x,0) {};
+  \node[draw,fill=cnblue!40,minimum width=5mm,minimum height=3mm] at (3.0,0) {};
+  \node[below=6mm of t1,font=\small,align=center] {\textbf{Transmission}\\(push cars through booth)};
+  \node[font=\small,align=center] at (4.2,-1.0) {\textbf{Propagation}\\(drive the highway)};
+\end{tikzpicture}
+\end{center}
+
+\subsection{Every packet pays four kinds of delay}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{>{\bfseries}l X l}
+\toprule
+Delay & What it is & Size / formula \\
+\midrule
+1. Processing & Router examines the header, checks for bit errors, decides where to send. & tiny, $\sim$ microseconds \\
+2. Queuing & Time waiting in a buffer behind other packets. & variable (named only, not computed) \\
+3. Transmission & Time to push \emph{all} the packet's bits onto the link. & $d_{trans} = L/R$ \\
+4. Propagation & Time for one bit to physically travel along the link. & $d_{prop} = d/s$ \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\[
+d_{\text{nodal}} = d_{\text{proc}} + d_{\text{queue}} + d_{\text{trans}} + d_{\text{prop}}
+\]
+
+\subsection{Toll booth = transmission, highway = propagation}
+\begin{center}
+\begin{tabularx}{\textwidth}{X X}
+\toprule
+\textbf{Transmission delay (``toll-booth time'')} & \textbf{Propagation delay (``highway time'')} \\
+\midrule
+Time to push every car (every bit) through the booth before the last one can go. & Time actually driving between the two booths at a fixed speed limit. Has nothing to do with how many cars there are. \\
+Depends on: \textbf{packet size} $L$ and \textbf{link rate} $R$. & Depends on: \textbf{distance} $d$ and \textbf{signal speed} $s$. \\
+More booths (higher $R$) $\Rightarrow$ faster. & More lanes $\neq$ faster: you can't beat the speed limit. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection{Transmission delay: $L/R$}
+\[
+d_{trans} = \frac{L \text{ (packet length in bits)}}{R \text{ (link rate in bits/sec)}}
+\]
+\begin{workedex}
+$L = 8{,}000$ bits, $R = 2$ Mbps $= 2{,}000{,}000$ bits/s.
+\[ d_{trans} = \frac{8{,}000}{2{,}000{,}000} = 0.004 \text{ s} = 4 \text{ ms} \]
+Doubling the link rate halves the delay:
+\begin{center}
+\begin{tabular}{ccc}
+\toprule
+2 Mbps & 4 Mbps & 8 Mbps \\
+\midrule
+4 ms & 2 ms & 1 ms \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{workedex}
+
+\subsection{Propagation delay: $d/s$}
+\[
+d_{prop} = \frac{d \text{ (distance in m)}}{s \text{ (signal speed} \approx 2\times 10^8 \text{ m/s in fibre)}}
+\]
+
+\begin{workedex}[The 500 Mbps link that still feels slow]
+A geostationary satellite link is advertised at 500 Mbps, but video calls still have an awkward $\sim$half-second lag.
+
+The satellite orbits about \textbf{35{,}786 km} above the equator. The signal goes up and back down: $\approx 71{,}500$ km, at the speed of light ($3\times 10^8$ m/s):
+\[ d_{prop} \approx \frac{71{,}572 \times 10^3}{3\times 10^8} \approx 0.24 \text{ s} = 240 \text{ ms} \]
+That is about 240 ms one way (up and down) \textbf{from physics alone}; a reply needs the same again, so the conversation feels laggy. More bandwidth (bigger $R$) cannot fix this, because the problem is $d$, not $R$.
+\end{workedex}
+
+\begin{center}
+\begin{tikzpicture}
+  \draw[fill=cnblue!15] (0,0) arc (180:0:3cm and 0.8cm) -- cycle;
+  \node at (3,0.35) {EARTH};
+  \node[draw,fill=cnorange!30,minimum width=10mm] (sat) at (3,3.6) {Satellite};
+  \draw[arr] (1.2,0.6) -- node[left,font=\footnotesize]{35{,}786 km} (sat.south west);
+  \draw[arr] (sat.south east) -- node[right,font=\footnotesize]{35{,}786 km} (4.8,0.6);
+\end{tikzpicture}
+\end{center}
+
+\section{When packets don't make it}
+If packets arrive at a router faster than it can send them out, they wait in the \textbf{queue (buffer)}. The buffer has limited size. When it is full, newly arriving packets are \textbf{dropped (lost)}. Lost packets must be re-sent by the previous node, the source, or not at all.
+
+\begin{center}
+\begin{tikzpicture}
+  \draw[thick] (0,0) rectangle (4,0.8);
+  \foreach \x in {0,0.5,...,3.5} \node[draw,fill=cnblue!40,minimum width=4.5mm,minimum height=6mm] at (\x+0.25,0.4) {};
+  \node[above=1mm,font=\small] at (2,0.8) {router buffer (full)};
+  \node[draw,fill=cnred!50,minimum width=4.5mm,minimum height=6mm] (new) at (-1.5,0.4) {};
+  \draw[arr] (new) -- (-0.2,0.4);
+  \node[cnred,font=\small\bfseries] at (-1.5,-0.3) {DROPPED};
+  \draw[arr] (4,0.4) -- (5.3,0.4) node[right,font=\small] {out link};
+\end{tikzpicture}
+\end{center}
+
+\section{Throughput --- what you actually get}
+\begin{itemize}
+  \item \textbf{Throughput:} the rate (bits/sec) at which data is \emph{actually received} --- not the advertised or theoretical rate. ``What lands.''
+  \item \textbf{Bottleneck link:} end-to-end throughput $\approx$ the \textbf{minimum} link rate on the path. The slowest hop sets the pace for everyone.
+\end{itemize}
+\[ \text{Throughput} \approx \min(R_1, R_2, \ldots, R_n) \]
+
+\begin{center}
+\begin{tikzpicture}
+  \node[host] (s) {Server};
+  \node[rtr,right=20mm of s] (r1) {};
+  \node[rtr,right=20mm of r1] (r2) {};
+  \node[host,right=20mm of r2] (c) {Client};
+  \draw[line width=4pt,cnblue!60] (s) -- node[above,font=\small,text=black]{10 Mbps} (r1);
+  \draw[line width=1pt,cnred] (r1) -- node[above,font=\small,text=black]{2 Mbps} node[below,font=\scriptsize,cnred]{bottleneck} (r2);
+  \draw[line width=3pt,cnblue!60] (r2) -- node[above,font=\small,text=black]{5 Mbps} (c);
+\end{tikzpicture}
+\end{center}
+End-to-end throughput here = \textbf{2 Mbps}, no matter how fast the other links are.
+
+\begin{workedex}[``I pay for 300 Mbps. Why is it buffering?'']
+Path: Netflix server $\to$ congested inter-network link $\to$ your ISP $\to$ home WiFi $\to$ your TV.
+The 300 Mbps is only your \textbf{access link} to the ISP --- one stop on a long path. The real bottleneck could be a congested link between networks, an overloaded Netflix server, or (very often) your own \textbf{home WiFi} struggling with walls and interference. Ask: \emph{which hop is the slowest?}
+\end{workedex}
+
+\section{Looking ahead}
+The core moves packets --- but thousands of different networks and apps must agree on a \textbf{format and order of operations}. That is the job of \textbf{protocol layers} (Lecture 3: OSI and TCP/IP models).
+
+\begin{recap}
+\begin{itemize}
+  \item Circuit switching = reserved path, guaranteed but wasteful when idle. Packet switching = share on demand, efficient but no guarantees.
+  \item Packet = header + payload. Routers use \textbf{store-and-forward}: receive whole packet, check, forward.
+  \item Statistical multiplexing $\Rightarrow$ efficiency (bursty users share) + resilience (reroute around failure).
+  \item Four delays: processing (tiny), queuing (variable), transmission $L/R$, propagation $d/s$.
+  \item $L=8000$ bits, $R=2$ Mbps $\Rightarrow$ 4 ms. GEO satellite $\approx$ 240 ms propagation.
+  \item Full buffer $\Rightarrow$ packet loss. Throughput = min link rate on path (bottleneck).
+\end{itemize}
+\end{recap}

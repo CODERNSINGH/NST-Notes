@@ -1,0 +1,159 @@
+\chapter{Lecture 1 --- Introduction to Computer Networks}
+
+\begin{keyidea}[The one idea from this lecture]
+``The cloud'' is not magic and not weightless. It is millions of real computers in real buildings, joined by real cables (many under the sea). A \textbf{computer network} is what lets all of these machines talk to each other. This course explains, step by step, how that talking happens.
+\end{keyidea}
+
+\section{What is the cloud?}
+
+A common joke says ``the cloud is just someone else's computer''. The lecture's answer: it is more like \emph{a lot} of someone else's computers.
+
+\begin{itemize}
+  \item Cloud providers such as \textbf{AWS} (Amazon Web Services), \textbf{Azure} (Microsoft) and \textbf{GCP} (Google Cloud Platform) run huge \textbf{data centres}. The lecture showed Google's data centre in Council Bluffs, Iowa: rows and rows of servers.
+  \item All those servers must constantly \textbf{talk to each other} and to you. So every cloud provider owns a super-fast computer network.
+  \item The job of that network: get all those 0s and 1s to you \textbf{efficiently}.
+\end{itemize}
+
+\begin{center}
+\begin{tikzpicture}[node distance=6mm]
+  \node[host] (u) {You\\(phone)};
+  \node[rtr, right=12mm of u] (r1) {R};
+  \node[rtr, right=12mm of r1] (r2) {R};
+  \node[draw,rounded corners,fill=cngreen!8,right=12mm of r2,minimum width=40mm,minimum height=22mm] (dc) {};
+  \node[above=0mm of dc.north,font=\small\bfseries] {Data centre (``the cloud'')};
+  \foreach \i in {0,1,2,3} { \node[srv,minimum width=7mm,minimum height=12mm] at ($(dc.west)+(5mm+\i*10mm,0)$) {}; }
+  \draw[arr] (u) -- (r1); \draw[arr] (r1) -- (r2); \draw[arr] (r2) -- (dc);
+  \node[below=10mm of r1,font=\footnotesize,align=center,xshift=10mm] {cables, routers, undersea links\\= the \emph{network}};
+\end{tikzpicture}
+\end{center}
+
+\section{Networks are not new}
+
+\begin{itemize}
+  \item In the \textbf{1960s} (1969, ARPANET), a computer at \textbf{UCLA} tried to send the word \texttt{login} to a computer at the \textbf{Stanford Research Institute}.
+  \item Only \texttt{lo} got through before the system crashed. So the very first message on the ancestor of the internet was ``lo''!
+  \item Lesson: networking has always been hard, and things go wrong. Much of this course is about how networks cope with failures.
+\end{itemize}
+
+\section{Types of network by size}
+
+Traditionally, networks are classified by how much area they cover.
+
+\begin{center}
+\begin{tikzpicture}
+  \draw[fill=cnblue!8,draw=cnblue] (0,0) ellipse (6.4cm and 2.6cm);
+  \node[font=\bfseries,cnblue] at (0,2.2) {WAN --- Wide Area Network};
+  \draw[fill=cngreen!10,draw=cngreen] (0,-0.2) ellipse (4.6cm and 1.9cm);
+  \node[font=\bfseries,cngreen!70!black] at (0,1.3) {MAN --- Metropolitan};
+  \draw[fill=cnorange!12,draw=cnorange] (0,-0.4) ellipse (2.9cm and 1.25cm);
+  \node[font=\bfseries,cnorange!80!black] at (0,0.45) {LAN --- Local};
+  \draw[fill=cnpurple!12,draw=cnpurple] (0,-0.75) ellipse (1.3cm and 0.5cm);
+  \node[font=\bfseries\small,cnpurple] at (0,-0.75) {PAN};
+\end{tikzpicture}
+\end{center}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{>{\bfseries}l l X}
+\toprule
+Type & Range & Example \\
+\midrule
+PAN (Personal Area Network) & A few metres & Phone $\leftrightarrow$ smartwatch, Bluetooth headphones \\
+LAN (Local Area Network) & A room / building & Your home WiFi, an office or college lab \\
+MAN (Metropolitan Area Network) & A city & City-wide networks run by a municipality or big organisation \\
+WAN (Wide Area Network) & Countries / continents & Branch offices of a company joined together; the \textbf{internet} itself \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{examtip}
+Remember the order from smallest to largest: \textbf{P}AN $<$ \textbf{L}AN $<$ \textbf{M}AN $<$ \textbf{W}AN. The internet is the biggest WAN of all.
+\end{examtip}
+
+\section{The internet is physical}
+
+Even though we call it ``the cloud'', the internet sits on a massive \textbf{physical infrastructure}.
+
+\begin{itemize}
+  \item In 2025 there were about \textbf{597 submarine (undersea) cable systems} linking continents.
+  \item Most international traffic travels through these fibre-optic cables lying on the ocean floor, not through satellites.
+\end{itemize}
+
+\subsection{Why is it hard to keep the cables safe?}
+\begin{itemize}
+  \item \textbf{Fishing anchors and trawlers:} the most common cause of damage to trans-Atlantic cables is ships' anchors accidentally dragging across and cutting them.
+  \item \textbf{Sharks} have been filmed biting cables (the lecture's fun example).
+  \item The cables are thousands of kilometres long and sit in deep water, so they are hard to watch and slow to repair.
+\end{itemize}
+
+\section{``What happens when\ldots?'' --- the gap this course fills}
+
+\subsection{Tapping the Instagram icon}
+You tap Instagram and a reel plays in under a second. Most people would describe this as ``WiFi $\to$ Instagram''. In reality the data passes through your phone's software, the WiFi radio, your home router, your ISP, many routers across the internet, possibly an undersea cable, a load balancer, a server in a data centre, a cache/CDN and back.
+
+\begin{center}
+\begin{tikzpicture}[node distance=4mm,every node/.style={font=\scriptsize}]
+  \node[box,minimum width=14mm] (a) {Your\\thumb/app};
+  \node[box,minimum width=14mm,right=of a] (b) {Phone\\WiFi radio};
+  \node[box,minimum width=14mm,right=of b] (c) {Home\\router};
+  \node[box,minimum width=14mm,right=of c] (d) {ISP};
+  \node[box,minimum width=14mm,right=of d] (e) {Internet\\routers};
+  \node[box,minimum width=14mm,right=of e] (f) {CDN /\\data centre};
+  \foreach \x/\y in {a/b,b/c,c/d,d/e,e/f} \draw[arr] (\x) -- (\y);
+  \draw[decorate,decoration={brace,mirror,amplitude=5pt}] ([yshift=-4mm]b.south west) -- ([yshift=-4mm]f.south east) node[midway,below=6pt,font=\small] {The ``gap'' most people skip --- this is what we study};
+\end{tikzpicture}
+\end{center}
+
+\subsection{The 10 PM Netflix problem}
+At 10 PM millions of people start a Netflix movie at the same time. Suddenly the app buffers or fails. Why? Too many people share the same links and servers at once (congestion), packets queue up and get delayed or dropped. Understanding \emph{why} this happens and how networks fight it is a central goal of the course.
+
+\section{Objective of the course}
+\begin{itemize}
+  \item To \textbf{demystify} how networks work, because networks are everywhere.
+  \item Even modern AI depends on networks: thousands of \textbf{GPUs} in a training cluster are connected with very fast network cards. A slow network means slow training.
+  \item What to expect: \textbf{foundations} (how computing devices talk to each other, how data travels), \textbf{hands-on labs} (configure your own network) and \textbf{network security}.
+\end{itemize}
+
+\section{The top-down approach}
+
+The course follows the \textbf{top-down approach} (as in the Kurose \& Ross textbook): start at the layer you already use, then dig down.
+
+\begin{center}
+\begin{tikzpicture}[layer/.style={draw,minimum width=60mm,minimum height=8mm,font=\small\bfseries}]
+  \node[layer,fill=cnblue!25] (a) {Application (Web, HTTP, DNS, streaming)};
+  \node[layer,fill=cnblue!18,below=0mm of a] (t) {Transport (TCP / UDP)};
+  \node[layer,fill=cnblue!12,below=0mm of t] (n) {Network (IP / routing)};
+  \node[layer,fill=cnblue!7,below=0mm of n] (l) {Link};
+  \node[layer,fill=cnblue!3,below=0mm of l] (p) {Physical};
+  \draw[arr,cnorange,line width=1.5pt] ([xshift=8mm]a.north east) -- node[right,font=\small,align=left,text=black] {start here\\(what you know)\\[18mm] then go down\\(``why'' before\\``what'')} ([xshift=8mm]p.south east);
+\end{tikzpicture}
+\end{center}
+
+\begin{itemize}
+  \item \textbf{Applications first:} we begin with things you use daily (Web, HTTP, DNS, streaming). The needs of these apps explain \emph{why} the lower layers must exist.
+  \item \textbf{Drilling down to physical:} then we go down through Transport (TCP/UDP), Network (IP/routing), Link and Physical layers. This way we always answer ``why'' before ``what''.
+\end{itemize}
+
+\section{Course logistics}
+\begin{center}
+\begin{tabular}{lr}
+\toprule
+Component & Weight \\
+\midrule
+Contests & 20\% \\
+Projects & 20\% \\
+Mid Semester & 20\% \\
+End Semester & 40\% \\
+\bottomrule
+\end{tabular}
+\end{center}
+\textbf{Reference books:} \emph{Computer Networking: A Top-Down Approach} --- James Kurose \& Keith Ross; \emph{Data Communications and Networking} --- Behrouz A. Forouzan.
+
+\begin{recap}
+\begin{itemize}
+  \item The cloud = huge data centres full of physical servers + very fast networks joining them.
+  \item First internet message (1960s, UCLA $\to$ SRI): ``lo'' --- then it crashed.
+  \item PAN $<$ LAN $<$ MAN $<$ WAN. The internet is a WAN.
+  \item The internet depends on $\sim$597 undersea cable systems (2025); main threat = ship anchors (and sharks!).
+  \item The course is top-down: Application $\to$ Transport $\to$ Network $\to$ Link $\to$ Physical.
+\end{itemize}
+\end{recap}

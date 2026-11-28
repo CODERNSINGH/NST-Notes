@@ -1,0 +1,251 @@
+\chapter{Lecture 8 --- DNS: The Internet's Phone Book, and AWS Route 53}
+
+\begin{keyidea}[The one idea from this lecture]
+Computers reach servers by \textbf{IP address}, but humans remember \textbf{names} like \texttt{amazon.com}. \textbf{DNS (Domain Name System)} translates names into IP addresses. It is not one giant server but a \textbf{distributed, hierarchical database}: Root $\to$ TLD $\to$ Authoritative servers, with a \textbf{local DNS resolver} doing the legwork for you.
+\end{keyidea}
+
+\section{Recap and the question}
+So far: we can \textbf{secure} a connection (HTTPS/TLS, Lecture 6) and communicate \textbf{efficiently} (caching/CDNs, Lecture 7). But \textbf{how do we reach a server at all?}
+\begin{itemize}
+  \item By its domain name? \textcolor{cnred}{\ding{55}} --- the network doesn't route by names.
+  \item By the \textbf{address of the server} (its IP address)? \textcolor{cngreen}{\checkmark}
+\end{itemize}
+So we need something that answers: \emph{``What is the address of the server called \texttt{www.amazon.com}?''} That is DNS.
+
+\section{DNS records --- the Justdial analogy}
+\begin{analogy}[DNS records as Justdial listings]
+A business listing on Justdial shows the shop's \textbf{address}, \textbf{operating hours}, \textbf{services offered} and \textbf{contact numbers}. A domain's DNS records similarly list everything needed to reach its services.
+\end{analogy}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{>{\bfseries}l X X}
+\toprule
+Record & What it stores & Justdial equivalent \\
+\midrule
+A & Name $\to$ \textbf{IPv4} address (e.g.\ \texttt{99.83.190.102}) & The shop's address \\
+AAAA & Name $\to$ \textbf{IPv6} address & The shop's address (new format) \\
+MX & \textbf{Mail exchange}: which server receives email for the domain & The shop's phone number for calls \\
+NS & \textbf{Name servers}: which servers are authoritative for the domain & Who maintains the listing \\
+CNAME & \textbf{Alias}: one name points to another name (\texttt{www.x.com} $\to$ \texttt{x.com}) & ``Also known as'' \\
+TXT & Free text (used for domain verification, email security) & Extra notes \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\section{DNS: a distributed, hierarchical database}
+\begin{itemize}
+  \item DNS scales by using \textbf{many servers worldwide}.
+  \item Organised in a \textbf{hierarchical} (tree) structure.
+  \item \textbf{No single server holds all mappings} (that would be a single point of failure, too much traffic, too far from most users, and impossible to maintain).
+  \item Three main classes of DNS servers: \textbf{Root}, \textbf{Top-Level Domain (TLD)}, \textbf{Authoritative}.
+\end{itemize}
+
+\begin{center}
+\begin{tikzpicture}[level distance=16mm,
+  level 1/.style={sibling distance=45mm},
+  level 2/.style={sibling distance=20mm},
+  every node/.style={draw,rounded corners,font=\small,align=center,minimum height=7mm}]
+  \node[fill=cnred!20] {Root DNS servers}
+    child {node[fill=cnorange!20] {.com TLD}
+      child {node[fill=cngreen!15] {amazon.com\\\scriptsize authoritative}}
+      child {node[fill=cngreen!15] {google.com\\\scriptsize authoritative}}}
+    child {node[fill=cnorange!20] {.org TLD}
+      child {node[fill=cngreen!15] {wikipedia.org}}}
+    child {node[fill=cnorange!20] {.co / .in TLDs}
+      child {node[fill=cngreen!15] {newtonschool.co}}
+      child {node[fill=cngreen!15] {gov.in}}};
+\end{tikzpicture}
+\end{center}
+
+\section{Classes of DNS servers}
+\subsection{Root DNS servers}
+\begin{itemize}
+  \item The top of the tree. About \textbf{1000+ instances} worldwide (13 logical root ``names'', copied many times using anycast).
+  \item They don't know \texttt{amazon.com}'s IP; they \textbf{provide the IPs of TLD servers} (``ask the .com servers'').
+\end{itemize}
+\subsection{TLD (Top-Level Domain) servers}
+\begin{itemize}
+  \item Handle domains such as \textbf{.com, .org, .edu} and country codes (\textbf{.in, .jp}, \ldots).
+  \item Maintained by \textbf{registries} (e.g.\ \textbf{Verisign} for .com).
+  \item \textbf{Provide the IPs of authoritative servers} (``ask amazon.com's own servers'').
+\end{itemize}
+\subsection{Authoritative DNS servers}
+\begin{itemize}
+  \item \textbf{Hold the actual DNS records} for an organisation (e.g.\ \texttt{amazon.com}, \texttt{newtonschool.co}).
+  \item \textbf{Map hostnames $\to$ IP addresses} --- they give the final answer.
+  \item Can be run by the organisation itself or by a provider (e.g.\ AWS Route 53).
+\end{itemize}
+
+\subsection{Local DNS servers (resolvers)}
+\begin{itemize}
+  \item \textbf{Not part of the hierarchy}, but central to DNS operation at scale.
+  \item Provided by \textbf{ISPs} (residential and institutional) --- or public ones like 8.8.8.8.
+  \item Acts as a \textbf{proxy}: takes your query and forwards it into the hierarchy for you.
+  \item Usually \textbf{close to the client} (on the LAN or a few hops away).
+  \item Caches answers, so popular names (google.com) are answered instantly.
+\end{itemize}
+
+\section{How a DNS lookup works}
+Example: resolving \texttt{www.amazon.com}.
+\begin{enumerate}
+  \item Client (via local resolver) contacts a \textbf{Root} server $\to$ gets IP addresses of the \textbf{.com TLD} servers.
+  \item Contacts the \textbf{.com TLD} server $\to$ gets the IP of the \textbf{authoritative} server for \texttt{amazon.com}.
+  \item Contacts the \textbf{authoritative} server for \texttt{amazon.com} $\to$ gets the \textbf{IP of www.amazon.com}.
+\end{enumerate}
+
+\begin{center}
+\begin{tikzpicture}[yscale=0.9]
+  \foreach \x/\n/\c in {0/Browser/cnblue!15,3.6/Local resolver/cnblue!30,7.2/Root server/cnred!20,10.4/.com TLD/cnorange!25,13.6/Authoritative\\amazon.com/cngreen!25}
+    \node[draw,rounded corners,fill=\c,font=\scriptsize\bfseries,align=center,minimum width=20mm,minimum height=9mm] at (\x,0.4) {\n};
+  \foreach \x in {0,3.6,7.2,10.4,13.6} \draw[dashed,gray] (\x,-0.1) -- (\x,-7.4);
+  \draw[msg] (0,-0.5) -- node[above]{\scriptsize 1. www.amazon.com?} (3.6,-0.9);
+  \draw[msg] (3.6,-1.2) -- node[above]{\scriptsize 2. www.amazon.com?} (7.2,-1.6);
+  \draw[msg,cnred] (7.2,-1.9) -- node[above]{\scriptsize 3. ask .com TLD} (3.6,-2.3);
+  \draw[msg] (3.6,-2.6) -- node[above,pos=0.6]{\scriptsize 4. www.amazon.com?} (10.4,-3.2);
+  \draw[msg,cnorange] (10.4,-3.5) -- node[above,pos=0.4]{\scriptsize 5. ask amazon.com's NS} (3.6,-4.1);
+  \draw[msg] (3.6,-4.4) -- node[above,pos=0.65]{\scriptsize 6. www.amazon.com?} (13.6,-5.1);
+  \draw[msg,cngreen!50!black] (13.6,-5.4) -- node[above,pos=0.35]{\scriptsize 7. IP = 52.94.236.248} (3.6,-6.1);
+  \draw[msg,cngreen!50!black] (3.6,-6.5) -- node[above]{\scriptsize 8. IP (and cache it)} (0,-6.9);
+\end{tikzpicture}
+\end{center}
+
+\textbf{Lecture example:} the user types \texttt{newtonschool.co}. The resolver asks the root (``what is the name server for .co?'' $\to$ ``try 120.x.x.x''), then the .co TLD server (``what is the authoritative DNS for newtonschool.co?'' $\to$ ``try 80.x.x.x''), then the authoritative server (``what is the IP for newtonschool.co?'' $\to$ ``\textbf{99.83.190.102}''). The resolver returns that IP to the browser.
+
+\begin{examtip}
+Who gives what? \textbf{Root} $\to$ address of TLD server. \textbf{TLD} $\to$ address of authoritative server. \textbf{Authoritative} $\to$ the final IP address. \textbf{Local resolver} $\to$ does all the asking for you and caches the result. DNS mostly runs over \textbf{UDP port 53}.
+\end{examtip}
+
+\section{Demo: \texttt{nslookup}}
+\begin{lstlisting}
+$ nslookup google.com
+Server:   192.168.1.1        <- your local DNS resolver
+Address:  192.168.1.1#53
+
+Non-authoritative answer:    <- came from the resolver's cache
+Name:     google.com
+Address:  142.250.183.14
+\end{lstlisting}
+``Non-authoritative'' means the answer came from a cache, not straight from Google's authoritative server.
+
+\section{Demo: creating DNS records in AWS Route 53}
+\textbf{Amazon Route 53} is AWS's DNS service (named after DNS's port, 53). You create a \textbf{hosted zone} for your domain; Route 53 then acts as the \textbf{authoritative DNS server} for it. Inside the zone you add records, e.g.:
+\begin{center}
+\begin{tabular}{>{\ttfamily}l l >{\ttfamily}l}
+\toprule
+\textrm{Name} & Type & \textrm{Value} \\
+\midrule
+example.com & A & 203.0.113.10 \\
+www.example.com & CNAME & example.com \\
+example.com & MX & 10 mail.example.com \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Other topics in this slide deck}
+The Lecture 8 deck also contained revision and extension slides. The important ones are summarised here. (UDP, port types, PAT and QUIC slides from this deck are covered in Lecture 9.)
+
+\subsection{The Socket API}
+The \textbf{Socket API} is a toolkit that lets applications talk to the \textbf{transport layer}. It is the bridge between your app and protocols like \textbf{TCP and UDP}.
+\begin{center}
+\begin{tikzpicture}[b/.style={draw,minimum width=34mm,minimum height=8mm,font=\small}]
+  \node[b,fill=cnblue!20] (a) at (0,0) {Application};
+  \node[b,fill=cnorange!25] (s) at (0,-1.3) {Socket API};
+  \node[b,fill=cngreen!20] (t) at (0,-2.6) {Transport layer (TCP/UDP)};
+  \draw[arr] (a) -- (s); \draw[arr] (s) -- (t);
+\end{tikzpicture}
+\end{center}
+
+\subsection{HTTP recap}
+HTTP is a \textbf{stateless} protocol over TCP. Stages of an HTTP transaction: \textbf{connection $\to$ request $\to$ response $\to$ close}. Each request is independent; the server keeps no memory of earlier requests. (Full details in Lecture 5.)
+
+\subsection{APIs}
+\begin{itemize}
+  \item \textbf{Client--server paradigm:} client sends a query; server fetches data from a database and responds.
+  \item An \textbf{API (Application Programming Interface)} is a set of protocols, routines and tools that let different software systems communicate over a network. It defines \textbf{how components should interact} --- a structured way to send and receive data.
+  \item \textbf{Jeff Bezos's API mandate (2002, paraphrased):} all Amazon teams must expose their data and functionality through \textbf{service interfaces}; teams may communicate \textbf{only} through these interfaces over the network; technology doesn't matter; every interface must be designed to be \textbf{externalizable} (usable by outsiders); anyone who doesn't do this will be fired. This thinking later made AWS possible.
+  \item \textbf{Examples:} the \textbf{Google Maps API} powers location-based and delivery apps; \textbf{weather APIs} provide forecasts, real-time and historical data (usually JSON or XML) to travel apps (Kayak, AccuWeather) and smart-home devices (Nest).
+\end{itemize}
+
+\subsection{Classical ciphers}
+A \textbf{cipher} is any method of transforming a message to conceal its meaning.
+
+\textbf{Caesar cipher:} Julius Caesar sent messages through messengers, so he shifted every letter by a fixed number (e.g.\ 3): A$\to$D, B$\to$E, \ldots, Z$\to$C.
+\begin{lstlisting}
+Plain:  Raj never catches the train. Simran was sad!
+Shift 3
+Cipher: Udm qhyhu fdwfkhv wkh wudlq. Vlpudq zdv vdg!
+\end{lstlisting}
+
+\begin{center}
+\begin{tikzpicture}
+  \foreach \i in {0,...,25} {
+    \pgfmathsetmacro{\ang}{90-\i*360/26}
+    \node[font=\scriptsize\ttfamily] at (\ang:2.1) {\char\numexpr65+\i\relax};
+    \pgfmathtruncatemacro{\j}{mod(\i+3,26)}
+    \node[font=\scriptsize\ttfamily,cnred] at (\ang:1.55) {\char\numexpr65+\j\relax};
+  }
+  \draw (0,0) circle (2.35); \draw (0,0) circle (1.8); \draw (0,0) circle (1.3);
+  \node[align=center,font=\small] at (0,0) {shift\\$+3$};
+\end{tikzpicture}
+\end{center}
+Outer ring = plain letter, inner ring = cipher letter.
+
+\begin{workedex}[Substitution cipher puzzle from the slides]
+Ciphertext: \texttt{Gztkliv rsyz srrbz yrz dviv ufjk} (shift unknown). Since there are only 26 possible shifts, \textbf{brute force} them all:
+\begin{lstlisting}[language=Python]
+s = "Gztkliv rsyz srrbz yrz dviv ufjk"
+for k in range(26):
+    print(k, "".join(chr((ord(c.lower())-97-k) % 26 + 97)
+                     if c.isalpha() else c for c in s))
+\end{lstlisting}
+At shift \textbf{17} you get: \textbf{``picture abhi baaki hai mere dost''}. Lesson: shift ciphers are trivially breakable --- real security needs modern cryptography.
+\end{workedex}
+
+\subsection{Alice, Bob and Mallory (since 1978)}
+In cryptography stories, \textbf{Alice} and \textbf{Bob} want to talk securely, and \textbf{Mallory} is the malicious attacker in the middle.
+
+\textbf{Man-in-the-middle (MITM) attack:} the attacker secretly sits between a user and the website they are visiting, relaying (and possibly reading or changing) everything.
+\begin{center}
+\begin{tikzpicture}
+  \node[host] (a) at (0,0) {Alice\\\scriptsize(user)};
+  \node[draw,fill=cnred!25,minimum width=16mm,minimum height=10mm,align=center] (m) at (4.5,0) {Mallory\\\scriptsize(attacker)};
+  \node[srv] (b) at (9,0) {Bob\\\scriptsize(website)};
+  \draw[darr,cnred] (a) -- (m); \draw[darr,cnred] (m) -- (b);
+  \draw[dashed,gray,darr] (a.north) to[bend left=25] node[above,font=\scriptsize]{what Alice thinks is happening} (b.north);
+\end{tikzpicture}
+\end{center}
+
+\textbf{The challenge of communicating secrets in public} --- three threats:
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Threat & What Mallory does & Defended by \\
+\midrule
+Eavesdropping & reads the messages & Confidentiality (encryption) \\
+Tampering & changes the messages & Integrity (MACs / hashes) \\
+Impersonation & pretends to be Bob & Authentication (certificates) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{How TLS gets added on top of TCP (detailed steps)}
+After the TCP 3-way handshake, TLS runs its own handshake:
+\begin{enumerate}
+  \item \textbf{ClientHello:} supported TLS versions, list of cipher suites, a random number (\texttt{client\_random}), optionally the server name. \emph{``Here are the languages I speak. Can we talk securely?''}
+  \item \textbf{ServerHello:} chosen TLS version, selected cipher suite, its own random number (\texttt{server\_random}), its \textbf{digital certificate}. \emph{``I'll speak this language. Here's my ID.''}
+  \item \textbf{Certificate verification (client side):} is the certificate valid and trusted (via a CA)? Does the hostname match? Is it unexpired and not revoked? \emph{Like checking that a driver's licence is real and matches the person.}
+  \item \textbf{Pre-master secret:} the client generates a temporary shared value, encrypts it with the server's \textbf{public key} and sends it. Only the server can decrypt it (only it has the private key).
+  \item \textbf{Key derivation (both sides):} from pre-master secret + \texttt{client\_random} + \texttt{server\_random}, both derive the \textbf{same symmetric session key}.
+  \item \textbf{Finished messages:} each side sends a ``Finished'' message encrypted with the new key. Now both know the connection is secure --- the handshake is complete.
+\end{enumerate}
+
+\begin{recap}
+\begin{itemize}
+  \item DNS = name $\to$ IP. Distributed, hierarchical database; no single server knows everything.
+  \item Records: A (IPv4), AAAA (IPv6), MX (mail), NS (name servers), CNAME (alias), TXT.
+  \item Root ($\sim$1000+ instances) $\to$ IPs of TLD servers. TLD (.com/.org/.in; run by registries like Verisign) $\to$ IPs of authoritative. Authoritative $\to$ final IP.
+  \item Local resolver (ISP): not in hierarchy, acts as proxy, close to client, caches.
+  \item \texttt{nslookup} to query; Route 53 = AWS's authoritative DNS (hosted zones, records).
+  \item Extras: Socket API; APIs \& Bezos mandate; Caesar/shift cipher (brute force: 26 tries); MITM; 6-step TLS.
+\end{itemize}
+\end{recap}

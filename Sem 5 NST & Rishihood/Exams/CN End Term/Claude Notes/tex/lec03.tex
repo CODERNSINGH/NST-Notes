@@ -1,0 +1,253 @@
+\chapter{Lecture 3 --- OSI and TCP/IP Models}
+
+\begin{keyidea}[The one idea from this lecture]
+A network is far too complicated to design, build or debug as one single thing. \textbf{Layering} makes it manageable: each layer does \textbf{one job}, talks only to the layer directly above and below it, and deliberately knows nothing about the rest. Every later topic in this course sits inside one of these layers.
+\end{keyidea}
+
+\section{Where we left off}
+\begin{center}
+\begin{tabularx}{\textwidth}{>{\bfseries}l X}
+\toprule
+From Lecture 2 & What it said \\
+\midrule
+Packet $>$ circuit switching & Data is split into chunks that share links dynamically; far better for bursty traffic. \\
+Store-and-forward & Routers fully receive, check and buffer a packet before forwarding it. \\
+Anatomy of delay & Processing + queuing + transmission + propagation. \\
+Throughput \& bottlenecks & Your speed is capped by the slowest link on the path, not your ISP plan. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+The open question: thousands of networks, devices, operating systems and apps --- built by companies that never spoke to each other --- somehow \textbf{agree on the format} of packets and the \textbf{order of operations}. How? Answer: \textbf{layered models}.
+
+\section{The idea behind layering}
+
+\subsection{Sending a letter}
+You write a letter, put it in an envelope and hand it to the postal service. Does the mail carrier care about the letter's contents? \textbf{No.}
+
+That ``no'' is the whole idea:
+\begin{itemize}
+  \item The carrier needs only the \textbf{address on the envelope}.
+  \item You need to know how to write a letter, nothing about sorting offices, vans or flights.
+  \item Neither needs to understand the other's job --- and the letter still arrives.
+\end{itemize}
+
+\begin{analogy}[And what if the carrier \emph{does} care?]
+If the carrier reads the letter, the separation breaks: your \textbf{privacy} is gone, and the carrier must now understand every kind of message anyone might send. A layer that looks inside the layer above stops being a clean layer. This is the seed of two later topics: \textbf{encryption} (making contents unreadable to the carrier) and \textbf{which devices may look how deep} into your traffic (see firewalls, Lecture 4).
+\end{analogy}
+
+\subsection{What layering buys us}
+\begin{enumerate}
+  \item Each layer solves \textbf{one problem} and can be understood on its own.
+  \item A layer can be \textbf{replaced} without disturbing the others --- swap WiFi for Ethernet and nothing above needs rewriting.
+  \item Different \textbf{vendors} can build different layers and still interoperate, because the boundaries are agreed in advance.
+  \item When something breaks, you can \textbf{localise the fault} to one layer.
+\end{enumerate}
+
+\section{Encapsulation}
+
+\subsection{The nesting doll}
+\begin{itemize}
+  \item \textbf{Going down} the sender's stack: each layer \textbf{wraps} the data from above with its own \textbf{header} (encapsulation).
+  \item \textbf{Coming up} the receiver's stack: each layer \textbf{strips off} its own header and passes the rest up (decapsulation).
+  \item \textbf{Symmetry:} layer 3 at the receiver reads exactly the header written by layer 3 at the sender. Each layer has a ``private conversation'' with its partner (peer) at the other end.
+\end{itemize}
+
+\begin{center}
+\begin{tikzpicture}[f/.style={draw,minimum height=7mm,font=\scriptsize,inner sep=2pt}]
+  % data
+  \node[f,fill=cnblue!10,minimum width=30mm] (d4) at (0,0) {Data};
+  \node[font=\small\bfseries,anchor=west] at (-7.8,0) {Application};
+  \node[f,fill=cngreen!25,minimum width=10mm] (t) at (-2,-1) {TCP hdr};
+  \node[f,fill=cnblue!10,minimum width=30mm,right=0mm of t] {Data};
+  \node[font=\small\bfseries,anchor=west] at (-7.8,-1) {Transport};
+  \node[font=\footnotesize] at (4.4,-1) {segment};
+  \node[f,fill=cnorange!25,minimum width=10mm] (ip) at (-3,-2) {IP hdr};
+  \node[f,fill=cngreen!25,minimum width=10mm,right=0mm of ip] (t2) {TCP hdr};
+  \node[f,fill=cnblue!10,minimum width=30mm,right=0mm of t2] {Data};
+  \node[font=\small\bfseries,anchor=west] at (-7.8,-2) {Network};
+  \node[font=\footnotesize] at (4.4,-2) {packet};
+  \node[f,fill=cnpurple!25,minimum width=10mm] (eh) at (-4,-3) {Frame hdr};
+  \node[f,fill=cnorange!25,minimum width=10mm,right=0mm of eh] (ip3) {IP hdr};
+  \node[f,fill=cngreen!25,minimum width=10mm,right=0mm of ip3] (t3) {TCP hdr};
+  \node[f,fill=cnblue!10,minimum width=30mm,right=0mm of t3] (d3) {Data};
+  \node[f,fill=cnpurple!25,minimum width=8mm,right=0mm of d3] {trailer};
+  \node[font=\small\bfseries,anchor=west] at (-7.8,-3) {Data Link};
+  \node[font=\footnotesize] at (4.4,-3) {frame};
+  \node[font=\small\bfseries,anchor=west] at (-7.8,-4) {Physical};
+  \node[font=\scriptsize\ttfamily] at (0,-4) {0110100111010100101011101001010\ldots};
+  \node[font=\footnotesize] at (4.4,-4) {bits};
+  \draw[arr,cnred] (5.6,0.2) -- node[right,font=\small,align=left]{sender:\\wrap\\(add\\headers)} (5.6,-4.2);
+\end{tikzpicture}
+\end{center}
+
+\subsection{The gift-wrapping version}
+You wrap a gift in layers --- paper, then a box, then ribbon. The receiver unwraps in \textbf{exactly the reverse order}. You cannot untie the ribbon last.
+
+\begin{examtip}
+Encapsulation is what makes layering \emph{real}. A packet captured off a real network (e.g.\ in Wireshark) looks like a series of nested headers followed, finally, by your actual data. Reading a capture = peeling these layers.
+\end{examtip}
+
+\section{The OSI model}
+
+\subsection{What it is}
+\begin{itemize}
+  \item \textbf{OSI} = \textbf{Open Systems Interconnection}.
+  \item Divides network communication into \textbf{seven layers}, to simplify designing and reasoning about it.
+  \item Developed by the \textbf{ISO} (International Organization for Standardization).
+\end{itemize}
+
+\subsection{Why learn it?}
+\begin{itemize}
+  \item \textbf{Everything you use runs on it} --- WhatsApp, games, Netflix. Learn it once and the internet stops being magic.
+  \item \textbf{One map for a messy problem:} splits ``send data across the world'' into seven clean layers.
+  \item \textbf{The industry's shared language:} ``that's a Layer 4 issue'' --- you'll understand and use this in interviews and debugging.
+  \item \textbf{Foundation for everything after:} cybersecurity, cloud, AI infrastructure, backend engineering.
+\end{itemize}
+
+\subsection{Importance}
+It provides a \textbf{standard} for network communication and ensures \textbf{interoperability} --- machines built by companies that never coordinated can still talk.
+
+\begin{examtip}[Memory aid]
+\textbf{Bottom-up (1 $\to$ 7):} \textbf{P}lease \textbf{D}o \textbf{N}ot \textbf{T}hrow \textbf{S}ausage \textbf{P}izza \textbf{A}way --- Physical, Data Link, Network, Transport, Session, Presentation, Application.\\[2pt]
+\textbf{Top-down (7 $\to$ 1):} \textbf{A}ll \textbf{P}eople \textbf{S}eem \textbf{T}o \textbf{N}eed \textbf{D}ata \textbf{P}rocessing.\\[2pt]
+Learn the \textbf{numbers} too: people say ``Layer 3'' far more often than ``Network layer''.
+\end{examtip}
+
+\begin{center}
+\begin{tikzpicture}[L/.style={draw,minimum width=42mm,minimum height=8mm,font=\small\bfseries}]
+  \foreach \n/\name/\c [count=\i] in {7/Application/cnblue!30,6/Presentation/cnblue!24,5/Session/cnblue!18,4/Transport/cngreen!25,3/Network/cnorange!25,2/Data Link/cnpurple!20,1/Physical/gray!25} {
+    \node[L,fill=\c] (s\n) at (0,-\i*0.8) {\n \quad \name};
+    \node[L,fill=\c] (r\n) at (8,-\i*0.8) {\n \quad \name};
+  }
+  \node[above=1mm of s7,font=\bfseries] {Sender};
+  \node[above=1mm of r7,font=\bfseries] {Receiver};
+  \draw[arr,cnred,line width=1.2pt] (-2.5,-0.8) -- (-2.5,-5.6);
+  \draw[arr,cnred,line width=1.2pt] (-2.5,-5.6) -- (-2.5,-6.4) -- (10.5,-6.4) -- (10.5,-0.8);
+  \node[font=\footnotesize,below] at (4,-6.4) {bits travel over the physical medium};
+  \foreach \n in {7,6,5,4,3,2} \draw[dashed,gray,<->] (s\n.east) -- (r\n.west);
+  \node[font=\footnotesize,gray,fill=white] at (4,-2.0) {peer-to-peer ``conversations''};
+\end{tikzpicture}
+\end{center}
+
+\section{The seven layers, one at a time}
+
+\subsection{Layer 7 --- Application}
+\textbf{Job:} delivers network services directly to end users; supports apps such as web browsers, email and file transfer. Unit: \textbf{data}.
+\begin{analogy}[A waiter]
+The waiter takes your order (user request), relays it to the kitchen (the network), and brings back your food (data). The customer never enters the kitchen; the chef never talks to the customer.
+\end{analogy}
+
+\subsection{Layer 6 --- Presentation}
+\textbf{Job:} formats, encrypts and compresses data so it is readable and secure for the receiving app. Two headline jobs: \textbf{translation} and \textbf{encryption}.
+\begin{itemize}
+  \item ASCII $\leftrightarrow$ Unicode and other character-encoding conversions.
+  \item Compression / decompression (zip, unzip).
+  \item Encryption / decryption.
+  \item Encoding images by type: PNG, JPEG, GIF.
+\end{itemize}
+\begin{analogy}[A translator]
+Converts, formats and secures messages so sender and receiver understand each other even if they ``speak different languages''. Data must be presented the way the application wants it \emph{and} the way your system wants it.
+\end{analogy}
+
+\subsection{Layer 5 --- Session}
+\textbf{Job:} establishes, manages and terminates \textbf{sessions} between two devices. Two named responsibilities: \textbf{dialog control} (whose turn is it?) and \textbf{synchronization}.
+\begin{analogy}[A judge / panel moderator]
+The judge calls ``Order! Order!'' and keeps proceedings running. A moderator starts the call, keeps it running smoothly and ends it when everyone is done.
+\end{analogy}
+
+\subsection{Layer 4 --- Transport}
+\textbf{Job:} reliable, efficient delivery of data between two devices. Data is given source/destination addressing (ports), broken up for transit, and reassembled at the receiver.
+\begin{analogy}[Many calls on one phone line]
+Many separate conversations share one line. \textbf{Multiplexing} ensures each message reaches the right recipient.
+\end{analogy}
+\textbf{Link back to Lecture 2:} TCP lives here. Loss detection, retransmission and pacing are all Layer 4 jobs.
+
+\subsection{Layer 3 --- Network}
+\textbf{Job:} \textbf{logical addressing} (IP addresses) and \textbf{forwarding/routing} packets \textbf{across different networks}. Plainly: get packets from A to B.
+\begin{analogy}[GPS]
+A GPS finds the best route for delivery trucks (packets). Layer 3 doesn't care whether the next network is Ethernet, WiFi or fibre --- that indifference is what lets a ``network of networks'' exist.
+\end{analogy}
+
+\subsection{Layer 2 --- Data Link}
+\textbf{Job:} reliable transfer between two \textbf{directly connected} nodes; \textbf{error detection} and \textbf{MAC addressing}. Scope: \textbf{one hop}, done correctly.
+\begin{itemize}
+  \item \textbf{Media access control --- ``one at a time!''} When many devices share a medium, something decides who transmits when.
+  \item \textbf{Error checking:} detect whether the bits that arrived are the bits that were sent.
+\end{itemize}
+\begin{keyidea}[Layer 2 vs Layer 3 --- the most confused pair]
+Layer 3 worries about the \textbf{whole journey} (end to end, across networks). Layer 2 worries only about getting safely to the \textbf{other end of one link}.
+\end{keyidea}
+
+\subsection{Layer 1 --- Physical}
+\textbf{Job:} transmits \textbf{raw bits} (0s and 1s) over a physical medium: \textbf{coaxial cable}, \textbf{fibre optic cable}, \textbf{radio waves}.
+\begin{analogy}[The roads and wires]
+The roads, wires and signals the postman uses. No addresses, no routes, no meaning --- just moving something from here to there.
+\end{analogy}
+Propagation delay (Lecture 2) lives here: the speed of light in fibre is a Layer 1 fact that no protocol can argue with.
+
+\subsection{The seven layers at a glance}
+\begin{center}
+\begin{tabularx}{\textwidth}{c l X l}
+\toprule
+\# & Layer & One-line job & Analogy \\
+\midrule
+7 & Application & Network services for users and their apps & The waiter \\
+6 & Presentation & Translates, compresses, encrypts & The translator \\
+5 & Session & Starts, maintains, ends the conversation & Judge / moderator \\
+4 & Transport & Reliable, efficient delivery; multiplexing & Many calls on one line \\
+3 & Network & Logical addressing and routing between networks & The GPS \\
+2 & Data Link & Reliable transfer over one link; MAC; error checks & ``One at a time, please'' \\
+1 & Physical & Moves raw bits over a medium & Roads and wires \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\section{The TCP/IP model}
+
+The TCP/IP model is a layered framework defining how data is transmitted over the internet, using standard protocols such as TCP and IP.
+
+\textbf{Its status matters:} OSI is the model we use to \textbf{think and teach}. TCP/IP is the model the internet \textbf{actually runs on}. They are not really competitors --- one is a clean conceptual scheme, the other a working system that grew.
+
+\begin{center}
+\begin{tikzpicture}[L/.style={draw,minimum width=36mm,font=\small\bfseries,align=center}]
+  \node[L,fill=cnblue!30,minimum height=24mm] (a) at (0,0) {Application};
+  \node[L,fill=cngreen!25,minimum height=8mm] (t) at (0,-1.6) {Transport};
+  \node[L,fill=cnorange!25,minimum height=8mm] (n) at (0,-2.4) {Network};
+  \node[L,fill=cnpurple!20,minimum height=16mm] (l) at (0,-3.6) {Network Access\\\scriptsize(Data Link + Physical)};
+  % OSI right
+  \begin{scope}[xshift=6cm]
+  \foreach \name/\c [count=\i] in {Application/cnblue!30,Presentation/cnblue!24,Session/cnblue!18,Transport/cngreen!25,Network/cnorange!25,Data Link/cnpurple!20,Physical/gray!25}
+    \node[L,fill=\c,minimum height=8mm] (o\i) at (0,1.6-\i*0.8) {\name};
+  \end{scope}
+  \node[above=2mm of a,font=\bfseries] {TCP/IP (4 layers)};
+  \node[above=2mm of o1,font=\bfseries] {OSI (7 layers)};
+  \draw[dashed,gray] (a.north east) -- (o1.north west); \draw[dashed,gray] (a.south east) -- (o3.south west);
+  \draw[dashed,gray] (t.south east) -- (o4.south west);
+  \draw[dashed,gray] (n.south east) -- (o5.south west);
+  \draw[dashed,gray] (l.south east) -- (o7.south west);
+\end{tikzpicture}
+\end{center}
+
+\subsection{OSI vs TCP/IP}
+\begin{center}
+\begin{tabularx}{\textwidth}{c X X}
+\toprule
+\# & OSI model & TCP/IP model \\
+\midrule
+1 & Open Systems Interconnection & Transmission Control Protocol / Internet Protocol \\
+2 & 7 layers & 4 layers \\
+3 & Developed by ISO (International Organization for Standardization) & Developed by DARPA (Defense Advanced Research Projects Agency) \\
+4 & A conceptual model & Used in actual data transmission between computers \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{recap}
+\begin{itemize}
+  \item Layering: each layer one job; talks only to neighbours; can be replaced; faults can be localised.
+  \item Encapsulation = add a header at each layer going down; decapsulation = strip it going up (nesting doll / gift wrap).
+  \item OSI: 7 layers, by ISO. Mnemonic: Please Do Not Throw Sausage Pizza Away (1$\to$7).
+  \item L7 waiter, L6 translator, L5 judge, L4 multiplexing/TCP, L3 GPS/IP, L2 one hop/MAC/errors, L1 raw bits.
+  \item TCP/IP: 4 layers, by DARPA; what the internet actually runs on.
+\end{itemize}
+\end{recap}

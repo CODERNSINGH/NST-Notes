@@ -1,0 +1,306 @@
+\chapter{Lecture 10 --- Reliable Data Transfer and TCP Flow Control}
+
+\begin{keyidea}[The one idea from this lecture]
+The network underneath is unreliable (packets get lost, corrupted, reordered). TCP builds \textbf{reliability} on top of it using \textbf{checksums} (detect corruption), \textbf{ACKs + timeouts based on RTT} (detect loss), and \textbf{retransmission}. To be efficient it sends many packets at once (\textbf{sliding window}) instead of one at a time (\textbf{stop-and-wait}), and uses \textbf{flow control} so a fast sender doesn't drown a slow receiver. When packets are lost, \textbf{Go-Back-N} resends everything from the lost one; \textbf{Selective Repeat} resends only the lost one.
+\end{keyidea}
+
+\section{Layers recap: building reliability from an unreliable channel}
+IP (network layer) is \textbf{best effort}: no guarantee of delivery, order or correctness. The transport layer (TCP) turns that into a reliable byte stream for the application.
+
+\begin{center}
+\begin{tikzpicture}
+  \node[draw,fill=cnblue!15,minimum width=40mm,minimum height=8mm] (a) at (0,0) {Application: wants reliable data};
+  \node[draw,fill=cngreen!25,minimum width=40mm,minimum height=8mm] (t) at (0,-1.2) {TCP: reliable data transfer};
+  \node[draw,fill=cnred!15,minimum width=40mm,minimum height=8mm] (n) at (0,-2.4) {Unreliable channel (IP)};
+  \draw[arr] (a) -- (t); \draw[arr] (t) -- (n);
+  \node[right=5mm of n,font=\scriptsize,align=left] {may lose, corrupt,\\reorder packets};
+  \node[right=5mm of t,font=\scriptsize,align=left] {checksums, seq numbers,\\ACKs, timers, retransmission};
+\end{tikzpicture}
+\end{center}
+
+\section{TCP --- Transmission Control Protocol}
+\begin{itemize}
+  \item \textbf{Establishes a connection} before data transfer (3-way handshake).
+  \item Maintains \textbf{data integrity} using \textbf{sequence numbers, acknowledgements and checksums}.
+  \item Ensures \textbf{reliable, ordered delivery}, handling any loss.
+  \item Handles \textbf{connection teardown} too.
+\end{itemize}
+
+\subsection{TCP connection teardown (4-way handshake) --- recap}
+\begin{enumerate}
+  \item Client sends \textbf{FIN} --- ``I have to go.''
+  \item Server replies \textbf{ACK} --- ``Okay.''
+  \item When the server has finished sending its remaining data, it sends its own \textbf{FIN} --- ``I'm done too.''
+  \item Client sends a final \textbf{ACK} --- ``Bye.''
+\end{enumerate}
+(In class this was observed in \textbf{Wireshark} using a TCP echo server: you can see SYN, SYN-ACK, ACK, the data with ACKs, then FIN/ACK/FIN/ACK.)
+
+\section{Checksums --- detecting corruption}
+TCP aims for reliable transfer, so it needs to \textbf{detect transmission errors} (bits flipped by noise) so that corrupted data can be retransmitted. It uses the \textbf{Internet checksum}: add the data in fixed-size chunks with \textbf{1's complement arithmetic} (any carry out of the top bit is \textbf{wrapped around} and added back), then \textbf{flip all the bits}.
+
+\subsection{Sender (Alice)}
+\begin{enumerate}
+  \item Split data into chunks (real TCP uses 16-bit words; the lecture uses 8-bit chunks for simplicity).
+  \item \textbf{Add} the chunks. If there is a \textbf{carry} out of the leftmost bit, \textbf{add it back} to the result (wrap-around).
+  \item Take the \textbf{1's complement} (flip every bit) $\Rightarrow$ this is the checksum.
+  \item Send the data \textbf{and} the checksum.
+\end{enumerate}
+
+\subsection{Receiver (Bob)}
+Bob adds the received data chunks \textbf{and} the received checksum (with wrap-around). If the result is \textbf{all 1s}, the data is correct with high probability. If any bit is 0, an error happened $\Rightarrow$ discard (and it will be retransmitted).
+
+\begin{workedex}[Example 1 --- the lecture's data: $147 + 86$]
+Chunk 1 = \texttt{10010011} (147), Chunk 2 = \texttt{01010110} (86).
+\begin{lstlisting}
+    10010011      (147)
+  + 01010110      ( 86)
+  ----------
+    11101001      (233)  -> fits in 8 bits, no carry this time
+\end{lstlisting}
+1's complement (flip bits): \texttt{11101001} $\to$ \textbf{checksum = \texttt{00010110}}.
+
+Receiver check:
+\begin{lstlisting}
+    11101001      (sum of data)
+  + 00010110      (checksum received)
+  ----------
+    11111111      -> all 1s, data is OK
+\end{lstlisting}
+\textbf{Note:} the lecture slides show this example with a carry (sum \texttt{1 00001001}, checksum \texttt{11110101}). But $147+86 = 233$, which fits in 8 bits, so there is no carry and the correct checksum is \texttt{00010110}. The \emph{method} on the slides is right; Example 2 shows what to do when a carry really happens.
+\end{workedex}
+
+\begin{workedex}[Example 2 --- with a carry (wrap-around)]
+Chunk 1 = \texttt{10110011} (179), Chunk 2 = \texttt{11100101} (229).
+\begin{lstlisting}
+      10110011      (179)
+    + 11100101      (229)
+    ----------
+    1 10011000      (408) -> carry-over bit!
+Wrap around: add the carry back
+      10011000
+    +        1
+    ----------
+      10011001      (sum)
+1's complement: 01100110   <- checksum
+Receiver: 10011001 + 01100110 = 11111111  -> all 1s
+\end{lstlisting}
+\end{workedex}
+
+\begin{center}
+\begin{tikzpicture}
+  \node[draw,fill=cnblue!15,align=center,minimum width=26mm] (s) at (0,0) {Alice\\\scriptsize sum $\to$ wrap $\to$ flip};
+  \node[draw,fill=cngreen!15,align=center,minimum width=26mm] (r) at (8,0) {Bob\\\scriptsize sum + checksum};
+  \draw[arr] (s) -- node[above,font=\scriptsize]{data + checksum} (r);
+  \node[draw,fill=cngreen!30,font=\scriptsize] (ok) at (10.8,0.6) {all 1s $\Rightarrow$ OK};
+  \node[draw,fill=cnred!25,font=\scriptsize] (bad) at (10.8,-0.6) {any 0 $\Rightarrow$ error};
+  \draw[->] (r) -- (ok); \draw[->] (r) -- (bad);
+\end{tikzpicture}
+\end{center}
+
+\section{The waiting game: Round Trip Time (RTT)}
+Alice sends a segment to Carol and needs a receipt (\textbf{ACK}) to know it arrived. \textbf{How long should she wait before assuming it was lost?} 10 ms? A whole second?
+
+\textbf{RTT (Round Trip Time)} = the total time for a segment to go from Alice to Carol \textbf{plus} the time for Carol's ACK to come back.
+\begin{itemize}
+  \item TCP measures RTT continuously and sets its \textbf{timeout a bit larger than the RTT}.
+  \item Too short a timeout $\Rightarrow$ needless retransmissions. Too long $\Rightarrow$ slow reaction to real loss.
+  \item You can see RTT with \texttt{ping}: e.g.\ \texttt{ping newtonschool.co} (nearby server, small RTT) vs \texttt{ping taobao.com} (server in China, much larger RTT, because of distance --- propagation delay!).
+\end{itemize}
+
+\begin{center}
+\begin{tikzpicture}
+  \node[font=\bfseries] at (0,0.4) {Alice}; \node[font=\bfseries] at (6,0.4) {Carol};
+  \lifelines{0}{6}{0}{-2.6}
+  \draw[msg] (0,-0.2) -- node[above,sloped,font=\scriptsize]{segment} (6,-1.0);
+  \draw[msg,cngreen!60!black] (6,-1.2) -- node[above,sloped,font=\scriptsize]{ACK} (0,-2.0);
+  \draw[decorate,decoration={brace,mirror,amplitude=5pt}] (-0.2,-0.2) -- (-0.2,-2.0) node[midway,left=6pt,font=\small]{RTT};
+\end{tikzpicture}
+\end{center}
+
+\section{Why is flow control needed?}
+\begin{itemize}
+  \item Devices have \textbf{different buffer sizes and processing power}.
+  \item A \textbf{fast sender} could \textbf{flood a slow receiver}, causing buffer overflow and packet loss.
+  \item TCP \textbf{flow control} lets the receiver say: \emph{``Hey, slow down --- I can only handle this much right now.''}
+\end{itemize}
+
+\section{Stop-and-Wait protocol}
+\subsection{How it works}
+\begin{enumerate}
+  \item Sender transmits a packet with sequence number $N$.
+  \item Sender \textbf{stops} all transmission and \textbf{waits}.
+  \item Receiver gets packet $N$ and processes it.
+  \item Receiver sends an ACK with number $N+1$ (``I got $N$, send me $N+1$ next'').
+  \item Only then does the sender send the next packet. (If no ACK arrives before the timeout, it resends $N$.)
+\end{enumerate}
+
+\begin{center}
+\begin{tikzpicture}
+  \node[font=\bfseries] at (0,0.4) {Sender}; \node[font=\bfseries] at (6,0.4) {Receiver};
+  \lifelines{0}{6}{0}{-5.0}
+  \fill[cnblue!30] (0,-0.2) -- (0,-0.6) -- (6,-1.6) -- (6,-1.2) -- cycle;
+  \node[font=\scriptsize,anchor=east] at (-0.1,-0.2) {first bit sent, $t=0$};
+  \node[font=\scriptsize,anchor=east] at (-0.1,-0.6) {last bit sent, $t=L/R$};
+  \draw[msg,cngreen!60!black] (6,-1.6) -- node[above,sloped,font=\scriptsize]{ACK} (0,-2.6);
+  \node[font=\scriptsize,anchor=east] at (-0.1,-2.6) {ACK arrives, $t = RTT + L/R$};
+  \draw[decorate,decoration={brace,amplitude=4pt}] (0.15,-0.6) -- (0.15,-2.6) node[midway,right=5pt,font=\scriptsize,align=left]{idle --- waiting!};
+  \fill[cnblue!30] (0,-2.6) -- (0,-3.0) -- (6,-4.0) -- (6,-3.6) -- cycle;
+  \node[font=\scriptsize,anchor=west] at (6.1,-1.4) {last bit arrives, send ACK};
+\end{tikzpicture}
+\end{center}
+
+\subsection{Why stop-and-wait is inefficient}
+Very inefficient on \textbf{high-latency or high-bandwidth} links: on a long-distance link the sender spends most of its time \textbf{waiting} for ACKs instead of sending.
+\[
+\text{Utilization} = \frac{T_{frame}}{T_{frame} + 2\,T_{prop}}
+\qquad T_{frame} = \text{transmission time } (L/R), \quad T_{prop} = \text{propagation delay}
+\]
+(Here $2T_{prop} \approx$ RTT.)
+
+\begin{workedex}[How bad is it?]
+Link $R = 1$ Gbps, packet $L = 8000$ bits, one-way propagation $T_{prop} = 15$ ms.
+\[ T_{frame} = \frac{8000}{10^9} = 0.008 \text{ ms} \]
+\[ U = \frac{0.008}{0.008 + 2\times 15} = \frac{0.008}{30.008} \approx 0.00027 \;(= 0.027\%) \]
+The 1 Gbps link is busy only 0.027\% of the time --- effective throughput $\approx 267$ kbps! Stop-and-wait wastes almost all of the link.
+\end{workedex}
+
+\section{Sliding window protocol}
+\begin{itemize}
+  \item TCP uses a \textbf{sliding window} for flow control.
+  \item The \textbf{receiver tells the sender how much data it can receive} at a time --- the \textbf{window size} (the ``Window size'' field in the TCP header).
+  \item The sender may have up to a window's worth of data \textbf{in flight} (sent but not yet ACKed) without waiting --- \textbf{pipelining}.
+  \item As the receiver processes data and ACKs it, the sender \textbf{slides the window forward} and sends more.
+\end{itemize}
+
+\begin{center}
+\begin{tikzpicture}[c/.style={draw,minimum width=7mm,minimum height=7mm,font=\scriptsize}]
+  \foreach \i in {0,...,13} {
+    \pgfmathtruncatemacro{\n}{\i}
+    \ifnum\i<3 \node[c,fill=cngreen!35] at (\i*0.7,0) {\n};
+    \else\ifnum\i<6 \node[c,fill=cnorange!35] at (\i*0.7,0) {\n};
+    \else\ifnum\i<8 \node[c,fill=cnblue!20] at (\i*0.7,0) {\n};
+    \else \node[c,fill=gray!15] at (\i*0.7,0) {\n};
+    \fi\fi\fi
+  }
+  \draw[very thick,cnred,rounded corners] (1.75,-0.5) rectangle (5.25,0.5);
+  \node[font=\small,cnred] at (3.5,0.8) {window size = 5};
+  \draw[arr,cnred] (5.4,0.8) -- (6.4,0.8) node[right,font=\scriptsize]{slides right as ACKs arrive};
+  \node[font=\scriptsize,align=center] at (0.7,-1.1) {sent \&\\ACKed};
+  \node[font=\scriptsize,align=center] at (2.8,-1.1) {sent, not\\yet ACKed};
+  \node[font=\scriptsize,align=center] at (4.55,-1.1) {usable, not\\yet sent};
+  \node[font=\scriptsize,align=center] at (7.7,-1.1) {not usable yet\\(outside window)};
+\end{tikzpicture}
+\end{center}
+
+With a window of $N$ packets, utilization becomes roughly $\dfrac{N\cdot T_{frame}}{T_{frame}+2T_{prop}}$ (up to 100\%) --- $N$ times better than stop-and-wait.
+
+\subsection{Zero window condition}
+\begin{itemize}
+  \item Happens when the \textbf{receiver's buffer is full}.
+  \item The receiver advertises a \textbf{window size of 0} in the TCP header $\Rightarrow$ the sender must \textbf{stop sending} temporarily.
+  \item When the application reads data and frees buffer space, the receiver advertises a non-zero window again and sending resumes. (Meanwhile the sender periodically sends tiny ``window probe'' segments to check whether the window has reopened.)
+\end{itemize}
+
+\begin{center}
+\begin{tikzpicture}
+  \node[font=\bfseries] at (0,0.4) {Sender}; \node[font=\bfseries] at (7,0.4) {Receiver};
+  \lifelines{0}{7}{0}{-4.2}
+  \draw[msg] (0,-0.2) -- node[above,sloped,font=\scriptsize]{data} (7,-0.7);
+  \draw[msg,cnred] (7,-0.9) -- node[above,sloped,font=\scriptsize]{ACK, \textbf{window = 0} (buffer full)} (0,-1.4);
+  \node[font=\scriptsize,cnred,anchor=west] at (0.1,-1.9) {sender pauses};
+  \draw[msg,dashed] (0,-2.3) -- node[above,sloped,font=\scriptsize]{window probe} (7,-2.7);
+  \node[font=\scriptsize,anchor=east] at (6.9,-3.0) {app reads data, buffer frees};
+  \draw[msg,cngreen!60!black] (7,-3.3) -- node[above,sloped,font=\scriptsize]{ACK, \textbf{window = 4000}} (0,-3.8);
+  \node[font=\scriptsize,cngreen!60!black,anchor=west] at (0.1,-4.1) {sender resumes};
+\end{tikzpicture}
+\end{center}
+
+\section{Handling loss with a window: Go-Back-N and Selective Repeat}
+
+\subsection{Go-Back-N (GBN)}
+An error-control protocol for reliable communication over noisy channels. The sender may send multiple frames before receiving an ACK, but \textbf{if a frame is lost or corrupted, the sender retransmits that frame and ALL frames after it}.
+\begin{itemize}
+  \item Sender sends up to $N$ frames without waiting for individual ACKs.
+  \item Receiver \textbf{only accepts frames in order}.
+  \item If a frame is lost/corrupted, the receiver \textbf{discards it and every frame after it}, even if those were correct.
+  \item The sender \textbf{goes back} to the last unacknowledged frame and \textbf{retransmits all frames from there}.
+\end{itemize}
+
+\begin{center}
+\begin{tikzpicture}
+  \node[font=\bfseries] at (0,0.5) {Sender}; \node[font=\bfseries] at (8,0.5) {Receiver};
+  \lifelines{0}{8}{0.1}{-9.2}
+  \draw[msg] (0,0) -- node[above,pos=0.25]{\scriptsize F0} (8,-0.8);
+  \draw[msg] (0,-0.6) -- node[above,pos=0.25]{\scriptsize F1} (8,-1.4);
+  \draw[msg] (0,-1.2) -- node[above,pos=0.4]{\scriptsize F2} (4,-1.6); \node[cnred,font=\Large\bfseries] at (4.2,-1.62) {$\times$};
+  \draw[msg] (0,-1.8) -- node[above,pos=0.25]{\scriptsize F3} (8,-2.6);
+  \draw[msg] (0,-2.4) -- node[above,pos=0.25]{\scriptsize F4} (8,-3.2);
+  \node[font=\scriptsize,cnred,anchor=west,align=left] at (8.15,-2.9) {F3, F4 arrive out of\\order $\Rightarrow$ discarded};
+  \draw[msg,cngreen!50!black] (8,-0.9) -- node[below,pos=0.8]{\scriptsize ACK0} (0,-1.7);
+  \draw[msg,cngreen!50!black] (8,-1.5) -- node[below,pos=0.8]{\scriptsize ACK1} (0,-2.3);
+  \draw[decorate,decoration={brace,mirror,amplitude=4pt}] (-0.15,-1.2) -- (-0.15,-4.4) node[midway,left=5pt,font=\scriptsize]{timeout for F2};
+  \draw[msg,cnorange] (0,-4.6) -- node[above,pos=0.25]{\scriptsize F2} (8,-5.4);
+  \draw[msg,cnorange] (0,-5.2) -- node[above,pos=0.25]{\scriptsize F3} (8,-6.0);
+  \draw[msg,cnorange] (0,-5.8) -- node[above,pos=0.25]{\scriptsize F4} (8,-6.6);
+  \node[font=\scriptsize,cnorange,anchor=west,align=left] at (8.15,-6.0) {go back: resend\\F2, F3 \emph{and} F4};
+  \draw[msg,cngreen!50!black] (8,-6.9) -- node[above]{\scriptsize ACK2, ACK3, ACK4} (0,-7.8);
+\end{tikzpicture}
+\end{center}
+
+\subsection{Selective Repeat (SR)}
+Also an error-control protocol for unreliable/noisy networks, but \textbf{only the lost or corrupted frames are retransmitted}, not all following frames.
+\begin{itemize}
+  \item Sender can send multiple frames up to the window size without waiting for ACKs.
+  \item Receiver \textbf{accepts and buffers frames out of order}.
+  \item If a frame is lost/corrupted: the receiver discards \textbf{only that frame} and sends a \textbf{NACK} (negative ACK) or simply doesn't ACK it.
+  \item The sender \textbf{retransmits only the missing frame}, not the whole window. The receiver then delivers everything in order.
+\end{itemize}
+
+\begin{center}
+\begin{tikzpicture}
+  \node[font=\bfseries] at (0,0.5) {Sender}; \node[font=\bfseries] at (8,0.5) {Receiver};
+  \lifelines{0}{8}{0.1}{-7.2}
+  \draw[msg] (0,0) -- node[above,pos=0.25]{\scriptsize F0} (8,-0.8);
+  \draw[msg] (0,-0.6) -- node[above,pos=0.25]{\scriptsize F1} (8,-1.4);
+  \draw[msg] (0,-1.2) -- node[above,pos=0.4]{\scriptsize F2} (4,-1.6); \node[cnred,font=\Large\bfseries] at (4.2,-1.62) {$\times$};
+  \draw[msg] (0,-1.8) -- node[above,pos=0.25]{\scriptsize F3} (8,-2.6);
+  \draw[msg] (0,-2.4) -- node[above,pos=0.25]{\scriptsize F4} (8,-3.2);
+  \node[font=\scriptsize,cngreen!50!black,anchor=west,align=left] at (8.15,-2.9) {F3, F4 accepted\\and \textbf{buffered}};
+  \draw[msg,cngreen!50!black] (8,-3.5) -- node[above]{\scriptsize ACK0, 1, 3, 4 (NACK 2)} (0,-4.3);
+  \draw[msg,cnorange] (0,-4.7) -- node[above,pos=0.3]{\scriptsize F2 only} (8,-5.5);
+  \node[font=\scriptsize,anchor=west,align=left] at (8.15,-5.5) {deliver F2, F3, F4\\in order to app};
+  \draw[msg,cngreen!50!black] (8,-5.9) -- node[above]{\scriptsize ACK2} (0,-6.7);
+\end{tikzpicture}
+\end{center}
+
+\subsection{Comparison}
+\begin{center}
+\begin{tabularx}{\textwidth}{>{\bfseries}l X X X}
+\toprule
+ & Stop-and-Wait & Go-Back-N & Selective Repeat \\
+\midrule
+Frames in flight & 1 & up to $N$ & up to $N$ \\
+Receiver accepts out-of-order? & --- & No (discards) & Yes (buffers) \\
+On loss, resend & that frame & lost frame + all after it & only the lost frame \\
+Receiver buffer & 1 frame & 1 frame & up to window size \\
+Efficiency & Very low on long links & Good, but wasteful on errors & Best \\
+Complexity & Simplest & Simple receiver & More complex (per-frame timers, buffering) \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{examtip}
+If asked ``frame 2 of 0--6 is lost, which frames are resent?'': \textbf{GBN} $\Rightarrow$ 2, 3, 4, 5, 6. \textbf{SR} $\Rightarrow$ only 2. Stop-and-wait utilization formula: $U = T_{frame}/(T_{frame}+2T_{prop})$.
+\end{examtip}
+
+\begin{recap}
+\begin{itemize}
+  \item TCP = reliability over unreliable IP: connection setup, seq numbers, ACKs, checksums, retransmission, teardown.
+  \item Checksum: add chunks, wrap carry around, flip bits. Receiver: data + checksum = all 1s $\Rightarrow$ OK.
+  \item RTT = time to send + get ACK back; timeout set from RTT; see it with \texttt{ping}.
+  \item Flow control: stop a fast sender from overflowing a slow receiver.
+  \item Stop-and-wait: 1 packet then wait; $U = T_{frame}/(T_{frame}+2T_{prop})$ --- very low on long/fast links.
+  \item Sliding window: receiver advertises window size; sender keeps that much in flight and slides forward. Zero window = receiver full, sender stops.
+  \item Go-Back-N: resend lost + all after. Selective Repeat: buffer out-of-order, resend only the lost one (NACK).
+\end{itemize}
+\end{recap}

@@ -1,0 +1,240 @@
+\chapter{Lecture 7 --- Email Protocols (SMTP, POP3, IMAP), CDNs and Caching}
+
+\begin{keyidea}[The one idea from this lecture]
+Email uses two kinds of protocol: \textbf{SMTP} to \textbf{push} (send) mail between servers, and \textbf{POP3} or \textbf{IMAP} to \textbf{pull} (read) mail from your mailbox. Then: if the same content is requested again and again, don't fetch it from far away every time --- keep a copy close by. That is \textbf{caching}, and a world-wide network of caches is a \textbf{CDN}.
+\end{keyidea}
+
+\section{Recap: application layer protocols}
+HTTP/HTTPS for the web (Lectures 5--6). Today: email protocols and fast content delivery.
+
+\section{How email travels}
+
+\begin{center}
+\begin{tikzpicture}
+  \node[host,minimum width=18mm] (sua) at (0,0) {Sender's\\user agent};
+  \node[srv,minimum width=20mm] (sms) at (3.6,0) {Sender's\\mail server};
+  \node[srv,minimum width=20mm] (rms) at (7.6,0) {Receiver's\\mail server};
+  \node[host,minimum width=18mm] (rua) at (11.2,0) {Receiver's\\user agent};
+  \draw[arr,cnblue] (sua) -- node[above,font=\small\bfseries]{SMTP} node[below,font=\scriptsize]{push} (sms);
+  \draw[arr,cnblue] (sms) -- node[above,font=\small\bfseries]{SMTP} node[below,font=\scriptsize]{push} (rms);
+  \draw[arr,cngreen!60!black] (rms) -- node[above,font=\small\bfseries,align=center]{POP3 /\\IMAP} node[below,font=\scriptsize]{pull} (rua);
+\end{tikzpicture}
+\end{center}
+
+\subsection{How SMTP works}
+\begin{enumerate}
+  \item The email client (Gmail app, Outlook) connects to the \textbf{SMTP server}.
+  \item SMTP \textbf{pushes} the message from the sender to the \textbf{receiver's mail server}.
+  \item The receiver then uses \textbf{POP3 or IMAP} to retrieve the email.
+\end{enumerate}
+
+\section{SMTP --- Simple Mail Transfer Protocol (email \emph{server} protocol)}
+\begin{itemize}
+  \item \textbf{Sends} email from the sender's server to the recipient's server.
+  \item \textbf{Push-based} protocol.
+  \item Uses \textbf{TCP}, ports \textbf{25 / 587 / 465} (25 = server-to-server, 587 = submission with STARTTLS, 465 = SMTP over TLS).
+  \item \textbf{In the real world:} services such as \textbf{SendGrid, Mailchimp, Mailgun} offer \textbf{SMTP relays} that apps integrate with to send mail. \textbf{MailHog} is a tool for testing SMTP locally (it catches emails instead of delivering them).
+\end{itemize}
+
+\section{Email client protocols (reading mail)}
+
+\subsection{IMAP --- Internet Message Access Protocol}
+\begin{itemize}
+  \item Manages email \textbf{directly on the server} --- messages stay on the server.
+  \item Suitable for \textbf{multi-device access} (phone, laptop, web all see the same inbox).
+  \item Supports \textbf{folders} and \textbf{partial downloads}.
+  \item Ports: \textbf{143}, secure IMAPS: \textbf{993}.
+  \item Connection type: \textbf{two-way sync} (client $\leftrightarrow$ server).
+\end{itemize}
+\textbf{How IMAP works:}
+\begin{enumerate}
+  \item The email client connects to the server using IMAP.
+  \item You view and manage emails \textbf{without downloading them completely}.
+  \item Changes (read/unread, folders, deletions) are \textbf{reflected on the server} and \textbf{synced across all devices}.
+  \item You see folders (Inbox, Sent, Drafts, \ldots) as organised on the server.
+\end{enumerate}
+
+\subsection{POP3 --- Post Office Protocol version 3}
+\begin{itemize}
+  \item \textbf{Downloads} email to the local client and \textbf{deletes it from the server}.
+  \item Best for \textbf{offline access}, but \textbf{poor sync} across devices.
+  \item Ports: \textbf{110}, secure POP3S: \textbf{995}.
+  \item Connection type: \textbf{one-way} (server $\to$ client).
+\end{itemize}
+\textbf{How POP3 works:}
+\begin{enumerate}
+  \item The client connects to the mail server using POP3.
+  \item It downloads the emails.
+  \item It deletes them from the server.
+  \item Emails now exist \textbf{only on your local device}.
+\end{enumerate}
+
+\begin{center}
+\begin{tikzpicture}
+  \begin{scope}
+    \node[srv,minimum width=22mm] (s) at (0,0) {IMAP mail server\\\scriptsize(messages stay here)};
+    \node[host,font=\scriptsize] (p) at (-2,-2) {Phone};
+    \node[host,font=\scriptsize] (l) at (0,-2) {Laptop};
+    \node[host,font=\scriptsize] (w) at (2,-2) {Web};
+    \foreach \d in {p,l,w} \draw[darr,cngreen!60!black] (s) -- (\d);
+    \node[font=\small\bfseries] at (0,-3) {IMAP: two-way sync};
+  \end{scope}
+  \begin{scope}[xshift=7.5cm]
+    \node[srv,minimum width=22mm] (s2) at (0,0) {POP3 mail server\\\scriptsize(deleted after download)};
+    \node[host,font=\scriptsize] (l2) at (0,-2) {Laptop\\(only copy)};
+    \draw[arr,cnorange] (s2) -- (l2);
+    \node[font=\small\bfseries] at (0,-3) {POP3: one-way download};
+  \end{scope}
+\end{tikzpicture}
+\end{center}
+
+\subsection{Comparison}
+\begin{center}
+\begin{tabularx}{\textwidth}{>{\bfseries}l X X X}
+\toprule
+ & SMTP & IMAP & POP3 \\
+\midrule
+Purpose & Send / transfer mail & Read \& manage mail on server & Download mail to device \\
+Direction & Push & Two-way sync & One-way (server $\to$ client) \\
+Where mail lives & --- & On the server & On your device (deleted from server) \\
+Multi-device & --- & Excellent & Poor \\
+Ports & 25 / 587 / 465 & 143 / 993 (IMAPS) & 110 / 995 (POP3S) \\
+Transport & TCP & TCP & TCP \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{examtip}
+SMTP = \textbf{S}ends (push). POP3 = \textbf{P}ulls and removes (like picking letters out of a Post-Office box). IMAP = keeps everything on the server and \textbf{syncs}. Learn the port numbers!
+\end{examtip}
+
+\section{Quick and efficient content delivery}
+
+\subsection{The problem}
+Imagine the \textbf{same content is requested repeatedly} (the same logo, the same viral video). Fetching it from a far-away origin server each time wastes time and bandwidth. \textbf{Solution: caching.}
+
+\section{Caching}
+\textbf{Caching} is storing copies of data in a \textbf{temporary, high-speed storage layer} so future requests for the same data can be served much faster than fetching from the original, slower source.
+
+\begin{itemize}
+  \item \textbf{Cache hit:} the data is in the cache $\Rightarrow$ served immediately.
+  \item \textbf{Cache miss:} not in the cache $\Rightarrow$ fetch from the origin, then (usually) store a copy for next time.
+\end{itemize}
+
+\begin{center}
+\begin{tikzpicture}
+  \node[host] (c) at (0,0) {Client};
+  \node[draw,fill=cnorange!20,minimum width=18mm,minimum height=11mm] (k) at (4,0) {Cache};
+  \node[srv,minimum width=18mm] (o) at (8.5,0) {Origin\\server};
+  \draw[arr] ([yshift=2mm]c.east) -- node[above,font=\scriptsize]{request} ([yshift=2mm]k.west);
+  \draw[arr,cngreen!60!black] ([yshift=-2mm]k.west) -- node[below,font=\scriptsize]{\textbf{hit}: fast reply} ([yshift=-2mm]c.east);
+  \draw[arr,cnred,dashed] ([yshift=2mm]k.east) -- node[above,font=\scriptsize]{\textbf{miss}: fetch} ([yshift=2mm]o.west);
+  \draw[arr,cnred,dashed] ([yshift=-2mm]o.west) -- node[below,font=\scriptsize]{store copy} ([yshift=-2mm]k.east);
+\end{tikzpicture}
+\end{center}
+
+\subsection{Caching behaviour}
+How data is stored temporarily and retrieved to improve performance and reduce latency. Used widely in networking, browsers, web servers, CDNs and applications.
+
+\subsection{The Cache-Control header}
+The server tells clients/caches how to cache a response with an HTTP header:
+\begin{lstlisting}
+Cache-Control: public, max-age=3600
+\end{lstlisting}
+\begin{itemize}
+  \item \texttt{public} --- any cache (browser, proxy, CDN) may store it.
+  \item \texttt{max-age=3600} --- the copy is fresh for 3600 seconds (1 hour).
+  \item (Other common values: \texttt{private} = only the user's browser; \texttt{no-cache} = must revalidate before use; \texttt{no-store} = never store.)
+\end{itemize}
+
+\subsection{How caching works (step by step)}
+\begin{enumerate}
+  \item A client requests a resource (e.g.\ an image, a CSS file).
+  \item The server responds and may include \textbf{cache-control headers}.
+  \item The client stores the resource in its \textbf{local cache}.
+  \item On the next request, the client checks: \emph{is the cached copy still valid (not expired)?}
+  \begin{itemize}
+    \item \textbf{Valid} $\to$ use it from cache (\textbf{no network trip}).
+    \item \textbf{Expired} $\to$ \textbf{revalidate} with the server or fetch again.
+  \end{itemize}
+\end{enumerate}
+
+\subsection{Layers of caching}
+\begin{center}
+\begin{tikzpicture}
+  \node[host] (u) at (0,0) {Browser\\\scriptsize browser cache};
+  \node[draw,fill=cnorange!15,minimum height=11mm,align=center,font=\small] (p) at (3.4,0) {Proxy cache\\\scriptsize(office/ISP)};
+  \node[draw,fill=cnorange!25,minimum height=11mm,align=center,font=\small] (cdn) at (6.8,0) {CDN cache\\\scriptsize(edge server)};
+  \node[srv] (o) at (10,0) {Origin};
+  \draw[arr] (u) -- (p); \draw[arr] (p) -- (cdn); \draw[arr] (cdn) -- (o);
+  \node[font=\scriptsize] at (5,-1.1) {each layer is checked first; only misses travel further};
+\end{tikzpicture}
+\end{center}
+\begin{enumerate}
+  \item \textbf{Browser caching} --- on your own device.
+  \item \textbf{Proxy cache} --- shared by many users of an organisation or ISP.
+  \item \textbf{CDN cache} --- edge servers spread around the world.
+\end{enumerate}
+
+\section{Content Delivery Networks (CDNs)}
+
+\begin{analogy}[A chain of grocery stores]
+Instead of travelling to faraway farms, shoppers visit a \textbf{local store}. Local stores stock food from distant farms, saving time and effort. Similarly, CDNs \textbf{cache web content close to users}. Result: pages load in moments, just like shopping takes minutes, not days.
+\end{analogy}
+
+A \textbf{CDN} is a set of \textbf{geographically distributed servers} that deliver content from the \textbf{nearest edge server}, reducing latency and saving bandwidth.
+
+\subsection{How a CDN works}
+\begin{enumerate}
+  \item A user requests content (e.g.\ a video or image) from a website.
+  \item The \textbf{nearest edge server} serves the request instead of the origin server.
+  \item If the content is not cached, the edge server \textbf{retrieves it from the origin and caches it}.
+\end{enumerate}
+
+\begin{center}
+\begin{tikzpicture}
+  \node[srv,minimum width=20mm,fill=cnred!15] (o) at (0,0) {Origin server\\\scriptsize(USA)};
+  \foreach \a/\n/\l in {20/e1/Mumbai,90/e2/London,160/e3/Tokyo,240/e4/S\~ao Paulo,310/e5/Sydney} {
+    \node[draw,fill=cnorange!20,rounded corners,font=\scriptsize,align=center] (\n) at (\a:3.2) {Edge\\\l};
+    \draw[gray,dashed] (o) -- (\n);
+  }
+  \node[host,font=\scriptsize] (u) at (5.8,0.2) {User in\\India};
+  \draw[arr,cngreen!60!black,thick] (u) -- node[above,font=\scriptsize]{short trip} (e1);
+\end{tikzpicture}
+\end{center}
+
+\subsection{Benefits of a CDN}
+\begin{itemize}
+  \item \textbf{Faster load times} (shorter distance $d$ $\Rightarrow$ lower propagation delay --- Lecture 2).
+  \item \textbf{Reduced bandwidth usage} at the origin.
+  \item \textbf{Improved availability} --- if one server is down or overloaded, others can serve.
+  \item Absorbs traffic spikes and some attacks (DDoS).
+\end{itemize}
+
+\subsection{History and players}
+\begin{itemize}
+  \item \textbf{Origin (late 1990s):} CDNs emerged to solve web congestion and latency caused by growing internet use and media-rich content. \textbf{Akamai} pioneered the space in \textbf{1998}.
+  \item \textbf{Major players today:} Akamai, Cloudflare, Amazon CloudFront, Netflix Open Connect, Google Cloud CDN, Microsoft Azure CDN, Fastly.
+  \item Tool to check which CDN a site uses: \textbf{CDNPlanet}.
+  \item \textbf{Use cases:} websites, video streaming, software downloads, gaming, mobile apps.
+\end{itemize}
+
+\subsection{Netflix Open Connect}
+Netflix places its own \textbf{Open Connect Appliances} directly at \textbf{ISP sites} (points of presence). Each can hold up to \textbf{350 TB} of video. When you press play, the movie usually comes from a box inside your own ISP, not from across the ocean.
+
+\subsection{When CDNs fail: the Fastly outage (June 2021)}
+\begin{itemize}
+  \item A \textbf{misconfiguration} in Fastly's network triggered a widespread outage, taking down major websites such as \textbf{Reddit, Amazon and The New York Times}.
+  \item It showed how \textbf{reliant the modern internet is on CDNs}: one provider's mistake disrupted many platforms at once.
+\end{itemize}
+
+\begin{recap}
+\begin{itemize}
+  \item SMTP: push/send between servers, TCP 25/587/465. SendGrid/Mailchimp/Mailgun = SMTP relays; MailHog = test tool.
+  \item IMAP: mail stays on server, two-way sync, multi-device, folders, ports 143/993.
+  \item POP3: download then delete from server, one-way, offline, ports 110/995.
+  \item Caching = keep a fast copy nearby. Hit vs miss. \texttt{Cache-Control: public, max-age=3600}.
+  \item Layers: browser $\to$ proxy $\to$ CDN. Valid $\Rightarrow$ use cache; expired $\Rightarrow$ revalidate.
+  \item CDN = distributed edge servers; Akamai 1998; Netflix Open Connect (350 TB at ISPs); Fastly 2021 outage.
+\end{itemize}
+\end{recap}

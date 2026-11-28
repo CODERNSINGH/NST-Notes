@@ -1,0 +1,328 @@
+\chapter{Lecture 9 --- The Transport Layer: Multiplexing, Ports, UDP and the TCP Connection}
+
+\begin{keyidea}[The one idea from this lecture]
+The network layer (IP) delivers data to the right \textbf{computer}. The transport layer delivers it to the right \textbf{program} on that computer, using \textbf{port numbers}. It offers two services: \textbf{UDP} --- fast, simple, no guarantees; and \textbf{TCP} --- connection-based, ordered and reliable (3-way handshake, sequence numbers, ACKs, retransmission).
+\end{keyidea}
+
+\section{Recap: DNS lookup}
+Example \texttt{www.amazon.com}: (1) Root server $\to$ IPs of .com TLD servers; (2) .com TLD $\to$ IP of amazon.com's authoritative server; (3) authoritative server $\to$ IP of www.amazon.com. Now we go one layer down: \textbf{Layer 4}.
+
+\section{Layer 4 --- the transport layer}
+\begin{itemize}
+  \item Implemented \textbf{only in the end devices} (sender and receiver).
+  \item \textbf{Routers only process network-layer} information; they \textbf{ignore} TCP/UDP segment fields completely.
+  \item The transport layer converts application \textbf{messages} into \textbf{segments}.
+  \item Transport layer = communication between \textbf{processes}; network layer = communication between \textbf{hosts}.
+\end{itemize}
+
+\begin{center}
+\begin{tikzpicture}[b/.style={draw,minimum width=16mm,minimum height=5.5mm,font=\scriptsize}]
+  \foreach \x/\name/\top in {0/Sender/5,4/Router/3,8/Router/3,12/Receiver/5} {
+    \node[font=\small\bfseries] at (\x,0.5) {\name};
+    \ifnum\top=5
+      \node[b,fill=cnblue!20] at (\x,0) {Application};
+      \node[b,fill=cngreen!30] at (\x,-0.55) {Transport};
+    \fi
+    \node[b,fill=cnorange!25] at (\x,-1.1) {Network};
+    \node[b,fill=cnpurple!15] at (\x,-1.65) {Link};
+    \node[b,fill=gray!20] at (\x,-2.2) {Physical};
+  }
+  \draw[thick] (0.8,-2.2) -- (3.2,-2.2); \draw[thick] (4.8,-2.2) -- (7.2,-2.2); \draw[thick] (8.8,-2.2) -- (11.2,-2.2);
+  \draw[dashed,cngreen!60!black,darr] (0.8,-0.55) -- node[above,font=\scriptsize]{transport: process-to-process (routers don't look)} (11.2,-0.55);
+\end{tikzpicture}
+\end{center}
+
+\section{Ports and sockets}
+\begin{analogy}[The apartment building]
+To send a letter to a friend in a large apartment building you need \textbf{both} the \textbf{building's street address} (1 Infinite Loop) \textbf{and} the \textbf{apartment number} (\#443). Without both, the letter gets lost.
+\end{analogy}
+\begin{itemize}
+  \item \textbf{IP address} = the computer's ``street address'' (e.g.\ 172.217.167.78).
+  \item \textbf{Port number} = the application's ``apartment number'' (e.g.\ 443).
+  \item \textbf{IP address + port number = socket} --- a unique endpoint (doorway) for a conversation.
+\end{itemize}
+
+\begin{center}
+\begin{tikzpicture}
+  \node[draw,rounded corners,fill=cnblue!10,minimum width=44mm,minimum height=12mm,align=center] (l) at (0,0) {Your laptop\\\ttfamily\small 192.168.1.5:52344};
+  \node[draw,rounded corners,fill=cngreen!12,minimum width=44mm,minimum height=12mm,align=center] (g) at (10,0) {Google server\\\ttfamily\small 172.217.167.78:443};
+  \draw[darr] (l) -- node[above,font=\small]{TCP connection} node[below=2mm,font=\scriptsize,align=center]{random client port\\$\leftrightarrow$ well-known server port} (g);
+\end{tikzpicture}
+\end{center}
+To see open sockets on Linux: \texttt{netstat -tnlp} (\texttt{t}=TCP, \texttt{n}=numeric, \texttt{l}=listening, \texttt{p}=program).
+
+\subsection{Types of port numbers}
+Port numbers are 16-bit (0--65535), in three ranges:
+\begin{center}
+\begin{tikzpicture}
+  \fill[cnblue!35] (-1,2) -- (1,2) -- (0,3.3) -- cycle; \node[font=\scriptsize\bfseries] at (0,2.35) {Well-known};
+  \fill[cnblue!30] (-2,1) -- (2,1) -- (1,2) -- (-1,2) -- cycle; \node[font=\small\bfseries] at (0,1.5) {Registered};
+  \fill[cnblue!15] (-3,0) -- (3,0) -- (2,1) -- (-2,1) -- cycle; \node[font=\small\bfseries] at (0,0.5) {Dynamic / Private};
+  \node[font=\scriptsize,anchor=west] at (1.4,2.5) {0--1023};
+  \node[font=\scriptsize,anchor=west] at (2.3,1.5) {1024--49151};
+  \node[font=\scriptsize,anchor=west] at (3.2,0.5) {49152--65535};
+\end{tikzpicture}
+\end{center}
+\begin{enumerate}
+  \item \textbf{Well-known ports (0--1023):} reserved for standard services --- HTTP \textbf{80}, HTTPS \textbf{443}, FTP \textbf{21}, DNS \textbf{53}, SSH \textbf{22} (also SMTP 25, POP3 110, IMAP 143).
+  \item \textbf{Registered ports (1024--49151):} used by third-party apps/vendors --- MySQL \textbf{3306}, PostgreSQL \textbf{5432}, Docker \textbf{2375}.
+  \item \textbf{Dynamic / private ports (49152--65535):} temporarily assigned by the OS for \textbf{client-side} connections (e.g.\ when your browser opens a connection). Also called \emph{ephemeral} ports.
+\end{enumerate}
+
+\section{Multiplexing and demultiplexing}
+\begin{itemize}
+  \item \textbf{Multiplexing (sender side):} collecting data from \textbf{many application processes}, adding headers (with port numbers), and sending it all through the network.
+  \item \textbf{Demultiplexing (receiver side):} delivering each received segment to the \textbf{correct application process}, by checking the \textbf{destination port number}.
+\end{itemize}
+\begin{analogy}[Letters in a courier box]
+Many letters (segments) travel together in one courier box (the IP connection to your computer). At the destination, the box is opened and each letter is handed to the right person based on the name on its envelope (the port number).
+\end{analogy}
+
+\begin{center}
+\begin{tikzpicture}
+  \node[font=\small\bfseries] at (-0.5,1.6) {Multiplexing};
+  \foreach \y/\n/\p in {1/HTTP/80,0.33/DNS/53,-0.33/SSH/22,-1/Other/{*}} {
+    \node[font=\scriptsize,anchor=east] at (-1.2,\y) {\n};
+    \draw[thick,cnblue] (-1.1,\y) .. controls (0,\y) and (0.5,0) .. (1.5,0);
+    \node[font=\tiny] at (-0.6,\y+0.13) {\p};
+  }
+  \draw[line width=4pt,cnblue!70] (1.5,0) -- node[above,font=\scriptsize,text=black]{one network link} (5.5,0);
+  \node[font=\small\bfseries] at (7.0,1.6) {Demultiplexing};
+  \foreach \y/\n in {1/HTTP,0.33/DNS,-0.33/SSH,-1/Other} {
+    \draw[thick,cngreen!60!black,->] (5.5,0) .. controls (6.5,0) and (7,\y) .. (7.8,\y);
+    \node[font=\scriptsize,anchor=west] at (7.9,\y) {\n};
+  }
+  \node[font=\scriptsize,align=center] at (6.9,-1.6) {by destination port};
+\end{tikzpicture}
+\end{center}
+
+Example: a laptop runs a browser, an email app and a music app at the same time. Replies from a web server (port 80), mail server (port 25) and music server arrive on the same network card; the transport layer hands each to the right app using the port.
+
+\section{Port Address Translation (PAT)}
+\begin{itemize}
+  \item \textbf{PAT} is a type of \textbf{NAT} (Network Address Translation) that lets \textbf{many devices on a private network share a single public IP address}.
+  \item Instead of giving every device its own public IP, PAT uses \textbf{unique port numbers} to track each connection. This \textbf{conserves public IP addresses}.
+  \item PAT rewrites \textbf{both the IP address and the port number}. Each internal connection gets: shared public IP + a unique port (per session).
+  \item The router keeps a \textbf{translation table}; when a reply comes back to that port, it knows which internal device and port to forward it to.
+  \item So dozens or hundreds of devices can use the internet at the same time through one public IP.
+\end{itemize}
+
+\begin{center}
+\begin{tikzpicture}
+  \node[host,font=\scriptsize] (a) at (0,1.4) {Laptop\\192.168.0.2:1234};
+  \node[host,font=\scriptsize] (b) at (0,0) {Phone\\192.168.0.3:3000};
+  \node[host,font=\scriptsize] (c) at (0,-1.4) {Smart TV\\192.168.0.4:2001};
+  \node[rtr,minimum size=12mm,font=\scriptsize,align=center] (r) at (4,0) {PAT\\router};
+  \node[font=\scriptsize] at (4,-0.95) {public IP 203.0.113.5};
+  \foreach \d in {a,b,c} \draw[arr] (\d) -- (r);
+  \node[srv,font=\scriptsize] (s1) at (8,1.4) {Server A};
+  \node[srv,font=\scriptsize] (s2) at (8,0) {Server B};
+  \node[srv,font=\scriptsize] (s3) at (8,-1.4) {Server C};
+  \draw[arr] (r) -- node[above,sloped,font=\tiny]{:45000} (s1);
+  \draw[arr] (r) -- node[above,font=\tiny]{:45001} (s2);
+  \draw[arr] (r) -- node[below,sloped,font=\tiny]{:45002} (s3);
+\end{tikzpicture}
+\end{center}
+\begin{center}
+\begin{tabular}{>{\ttfamily}l >{\ttfamily}l}
+\toprule
+\textrm{Inside (private IP:port)} & \textrm{Outside (public IP:port)} \\
+\midrule
+192.168.0.2:1234 & 203.0.113.5:45000 \\
+192.168.0.3:3000 & 203.0.113.5:45001 \\
+192.168.0.4:2001 & 203.0.113.5:45002 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Transport layer protocols: UDP and TCP}
+
+\subsection{UDP --- User Datagram Protocol}
+\begin{analogy}[``Who cares? UDP just sent it faster!'']
+The receiver asks ``Are you getting all of this?'' and UDP replies ``Who cares? I just sent it faster!'' UDP fires packets off without checking they arrived.
+\end{analogy}
+\begin{itemize}
+  \item \textbf{Connectionless:} no handshake --- just send.
+  \item \textbf{No guarantees:} no acknowledgements, no retransmission, no ordering.
+  \item \textbf{Tiny header (8 bytes) $\Rightarrow$ low overhead, very fast.}
+\end{itemize}
+
+\textbf{UDP segment format} (32 bits wide):
+\begin{center}
+\begin{tikzpicture}[f/.style={draw,minimum height=8mm,font=\small,align=center}]
+  \node[font=\scriptsize] at (3,0.65) {$\longleftarrow$ 32 bits $\longrightarrow$};
+  \node[f,minimum width=30mm,fill=cnblue!15] at (1.5,0) {source port \#};
+  \node[f,minimum width=30mm,fill=cnblue!15] at (4.5,0) {dest port \#};
+  \node[f,minimum width=30mm,fill=cnorange!15] at (1.5,-0.8) {length};
+  \node[f,minimum width=30mm,fill=cnorange!15] at (4.5,-0.8) {checksum};
+  \node[f,minimum width=60mm,minimum height=16mm,fill=cngreen!10] at (3,-2.0) {application data\\(payload)};
+  \node[font=\scriptsize,anchor=west,align=left] at (6.3,-0.8) {length in bytes of UDP\\segment, incl.\ header};
+\end{tikzpicture}
+\end{center}
+
+\subsection{Where UDP shines --- use cases}
+\begin{itemize}
+  \item \textbf{DNS:} a single short question and answer; if the reply is lost, just ask again. (Lookup: user $\to$ local DNS $\to$ root $\to$ TLD $\to$ authoritative, e.g.\ \texttt{newtonschool.co} $\to$ 99.83.190.102.)
+  \item \textbf{Live video streaming} (cricket, news, gaming streams): unlike buffered YouTube videos, live streams prioritise \textbf{speed}. UDP sends frames quickly; if some are lost, they are \textbf{skipped} to avoid lag. Goal: smooth, instant flow.
+  \item \textbf{Online gaming:} real-time speed matters more than perfect accuracy. Late data is useless --- better to lose a packet than wait for it.
+  \item \textbf{SNMP} (Simple Network Management Protocol): small, quick status requests (``is this router online?''); if a reply is lost it simply retries --- efficient for large networks.
+  \item \textbf{TFTP} (Trivial File Transfer Protocol): small config/boot files on trusted local networks, where speed and simplicity matter more than reliability --- avoids TCP's start-up overhead.
+  \item \textbf{DHCP} (Dynamic Host Configuration Protocol): quickly assigns IP addresses when a device joins a network with one-time request/response messages; the application handles any needed reliability.
+\end{itemize}
+Lab demo: a \textbf{UDP chat using \texttt{nc}} (netcat): \texttt{nc -u -l 9999} on one side, \texttt{nc -u <ip> 9999} on the other.
+
+\subsection{QUIC --- Quick UDP Internet Connections}
+\begin{itemize}
+  \item A modern transport protocol built \textbf{on top of UDP}, designed by \textbf{Google}.
+  \item Used by \textbf{HTTP/3} to make browsing faster and more secure: combines UDP's speed with TCP-like reliability.
+  \item Avoids TCP's slow handshakes, handles packet loss efficiently, has \textbf{built-in TLS encryption}, faster connection setup and \textbf{stream multiplexing}.
+  \item Used by Google, YouTube and Facebook.
+\end{itemize}
+
+\section{TCP --- Transmission Control Protocol}
+TCP is \textbf{connection-oriented} and \textbf{reliable}: before any data is sent, the two sides set up a connection with the \textbf{3-way handshake}.
+
+\subsection{The TCP 3-way handshake}
+Story: your browser (client) connecting to a Google server (listening on port 443).
+
+\begin{center}
+\begin{tikzpicture}
+  \node[draw,fill=cnblue!20,font=\bfseries] at (0,0.5) {Client (browser)};
+  \node[draw,fill=cngreen!20,font=\bfseries] at (8,0.5) {Server (Google :443)};
+  \lifelines{0}{8}{0}{-4.2}
+  \draw[msg,cnblue] (0,-0.4) -- node[above,font=\small,sloped]{\textbf{SYN}, seq = 100} (8,-1.2);
+  \draw[msg,cngreen!60!black] (8,-1.6) -- node[above,font=\small,sloped]{\textbf{SYN-ACK}, seq = 350, ack = 101} (0,-2.4);
+  \draw[msg,cnblue] (0,-2.8) -- node[above,font=\small,sloped]{\textbf{ACK}, ack = 351} (8,-3.6);
+  \node[font=\small\bfseries,cnred] at (4,-4.3) {ESTABLISHED --- data can flow};
+\end{tikzpicture}
+\end{center}
+
+\begin{enumerate}
+  \item \textbf{The ring --- SYN} (``synchronize''): \emph{``Hey, are you there? I'd like to talk. I'll start numbering my sentences at 100.''}
+  \item \textbf{The ``Hello?'' --- SYN-ACK:} the server does two things at once: \emph{``Yes, I'm here! I ACKnowledge you start at 100. And I'll SYNchronize my side starting at 350. Ready?''}
+  \item \textbf{The ``I'm here!'' --- ACK:} \emph{``Got it! I acknowledge you start at 350. Let's talk!''} $\Rightarrow$ connection \textbf{ESTABLISHED}.
+\end{enumerate}
+
+\subsection{TCP connection teardown (4-way handshake)}
+TCP says goodbye politely:
+\begin{center}
+\begin{tikzpicture}
+  \node[draw,fill=cnblue!20,font=\bfseries] at (0,0.5) {Client};
+  \node[draw,fill=cngreen!20,font=\bfseries] at (8,0.5) {Server};
+  \lifelines{0}{8}{0}{-4.6}
+  \draw[msg,cnblue] (0,-0.3) -- node[above,sloped,font=\small]{1. \textbf{FIN} (``I have to go'')} (8,-1.0);
+  \draw[msg,cngreen!60!black] (8,-1.3) -- node[above,sloped,font=\small]{2. \textbf{ACK} (``Okay'')} (0,-2.0);
+  \node[font=\scriptsize,align=right,anchor=east] at (7.9,-2.4) {server finishes sending remaining data};
+  \draw[msg,cngreen!60!black] (8,-2.8) -- node[above,sloped,font=\small]{3. \textbf{FIN} (``I'm done too'')} (0,-3.5);
+  \draw[msg,cnblue] (0,-3.8) -- node[above,sloped,font=\small]{4. \textbf{ACK} (``Bye'')} (8,-4.5);
+\end{tikzpicture}
+\end{center}
+
+\subsection{Sequence numbers $\Rightarrow$ ordered delivery}
+Segments can take different routes and \textbf{arrive out of order}. Imagine reading: ``the mat.'' ``The cat'' ``sat on'' --- confusing! TCP numbers every segment (using the sequence numbers agreed in the handshake). If segment \#3 arrives before \#2, the receiver \textbf{waits for \#2} and then hands the data to the application in the correct order: ``The cat sat on the mat.''
+
+\subsection{Acknowledgements and retransmission}
+On a phone call you know the other person heard you when they say ``hmm'' or ``achcha''. TCP does the same:
+\begin{itemize}
+  \item When the server receives bytes 101--200, it sends back an \textbf{ACK} saying \emph{``I've received everything up to 200; send 201 next''} (ack number = \textbf{next expected byte}).
+  \item If the sender gets \textbf{no ACK within a certain time} (timeout), it assumes the data was lost and \textbf{retransmits} it.
+\end{itemize}
+
+\begin{center}
+\begin{tikzpicture}
+  \node[font=\bfseries] at (0,0.4) {Sender}; \node[font=\bfseries] at (7,0.4) {Receiver};
+  \lifelines{0}{7}{0}{-4.4}
+  \draw[msg] (0,-0.3) -- node[above,sloped,font=\scriptsize]{bytes 101--200} (7,-0.9);
+  \draw[msg,cngreen!60!black] (7,-1.1) -- node[above,sloped,font=\scriptsize]{ACK 201} (0,-1.7);
+  \draw[msg] (0,-1.9) -- (4.2,-2.25); \node[cnred,font=\bfseries] at (4.4,-2.27) {$\times$};
+  \node[font=\scriptsize,cnred] at (4.6,-2.6) {lost};
+  \draw[decorate,decoration={brace,mirror,amplitude=4pt}] (-0.15,-1.9) -- (-0.15,-3.3) node[midway,left=5pt,font=\scriptsize]{timeout};
+  \draw[msg] (0,-3.4) -- node[above,sloped,font=\scriptsize]{bytes 201--300 (retransmitted)} (7,-4.0);
+  \draw[msg,cngreen!60!black] (7,-4.1) -- node[below,sloped,font=\scriptsize]{ACK 301} (0,-4.6);
+\end{tikzpicture}
+\end{center}
+
+\subsection{TCP segment header (preview)}
+\begin{center}
+\begin{tikzpicture}[f/.style={draw,minimum height=7mm,font=\scriptsize,align=center}]
+  \node[font=\scriptsize] at (4,0.6) {$\longleftarrow$ 32 bits $\longrightarrow$};
+  \node[f,minimum width=40mm,fill=cnblue!15] at (2,0) {Source port (16)};
+  \node[f,minimum width=40mm,fill=cnblue!15] at (6,0) {Destination port (16)};
+  \node[f,minimum width=80mm,fill=cnorange!15] at (4,-0.7) {Sequence number (32)};
+  \node[f,minimum width=80mm,fill=cnorange!15] at (4,-1.4) {Acknowledgment number (32)};
+  \node[f,minimum width=12mm,fill=cnpurple!15] at (0.6,-2.1) {Data\\[-3pt]offset};
+  \node[f,minimum width=10mm,fill=gray!15] at (1.7,-2.1) {Rsvd};
+  \node[f,minimum width=18mm,fill=cnred!15] at (3.1,-2.1) {Flags\\[-3pt]SYN ACK FIN\ldots};
+  \node[f,minimum width=40mm,fill=cngreen!15] at (6,-2.1) {Window size (16)};
+  \node[f,minimum width=40mm,fill=cnpurple!10] at (2,-2.8) {Checksum (16)};
+  \node[f,minimum width=40mm,fill=cnpurple!10] at (6,-2.8) {Urgent pointer (16)};
+  \node[f,minimum width=80mm,fill=white] at (4,-3.5) {Options (variable)};
+  \node[f,minimum width=80mm,minimum height=10mm,fill=cngreen!8] at (4,-4.35) {Data (payload)};
+\end{tikzpicture}
+\end{center}
+\begin{center}
+\begin{tabularx}{\textwidth}{>{\bfseries}l X}
+\toprule
+Field & Purpose \\
+\midrule
+Source port & Port of the sending application. \\
+Destination port & Port of the receiving application. \\
+Sequence number & Identifies the bytes in this segment, so data can be put in order. \\
+Acknowledgment number & Confirms receipt; = the \textbf{next expected} sequence number. \\
+Data offset & Length of the TCP header in 32-bit words. \\
+Control flags & Control bits such as \textbf{SYN, ACK, FIN} (also RST, PSH, URG). \\
+Window size & Receiver's available buffer --- used for \textbf{flow control} (Lecture 10). \\
+Checksum & Detects corruption --- data integrity. \\
+Urgent pointer & If URG flag is set: offset from the sequence number to the last urgent byte. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\section{Speed vs reliability --- the UDP/TCP trade-off}
+\begin{center}
+\begin{tikzpicture}
+  \begin{scope}
+    \node[font=\bfseries,fill=cnblue!40,text=white,minimum width=50mm] at (2,0.9) {UDP};
+    \lifelines{0}{4}{0.5}{-2.4}
+    \foreach \y in {0.2,-0.5,-1.2,-1.9} \draw[msg] (0,\y) -- (4,\y-0.3);
+    \node[font=\scriptsize] at (2,-2.7) {just send, no setup, no ACKs};
+  \end{scope}
+  \begin{scope}[xshift=7cm]
+    \node[font=\bfseries,fill=cnpurple!40,text=white,minimum width=50mm] at (2,0.9) {TCP};
+    \lifelines{0}{4}{0.5}{-2.4}
+    \draw[msg] (0,0.2) -- node[above,font=\tiny]{SYN} (4,-0.1);
+    \draw[msg] (4,-0.2) -- node[above,font=\tiny]{SYN-ACK} (0,-0.5);
+    \draw[msg] (0,-0.6) -- node[above,font=\tiny]{ACK} (4,-0.9);
+    \draw[msg] (0,-1.2) -- node[above,font=\tiny]{data} (4,-1.5);
+    \draw[msg] (4,-1.7) -- node[above,font=\tiny]{ACK} (0,-2.0);
+    \node[font=\scriptsize] at (2,-2.7) {handshake, ACKs, retransmissions};
+  \end{scope}
+\end{tikzpicture}
+\end{center}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{>{\bfseries}l X X}
+\toprule
+ & UDP & TCP \\
+\midrule
+Connection & Connectionless & Connection-oriented (3-way handshake) \\
+Reliability & None --- lost data is lost & Reliable --- ACKs + retransmission \\
+Ordering & No & Yes (sequence numbers) \\
+Header size & 8 bytes & 20+ bytes \\
+Speed & Faster, low overhead & Slower, more overhead \\
+Flow/congestion control & No & Yes \\
+Used by & DNS, live streaming, gaming, SNMP, TFTP, DHCP, QUIC/HTTP3 & HTTP/1.1, HTTP/2, HTTPS, SMTP, IMAP, POP3, SSH, FTP \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{recap}
+\begin{itemize}
+  \item Transport layer lives only in end hosts; routers ignore it. Messages $\to$ segments. Process-to-process.
+  \item Socket = IP + port. Ports: well-known 0--1023, registered 1024--49151, dynamic 49152--65535.
+  \item Multiplexing (sender gathers from many apps) / demultiplexing (receiver delivers by destination port).
+  \item PAT: many private devices share one public IP by using unique ports; rewrites IP and port.
+  \item UDP: connectionless, no guarantees, 8-byte header (src port, dst port, length, checksum). Uses: DNS, live video, gaming, SNMP, TFTP, DHCP. QUIC is built on UDP.
+  \item TCP: SYN $\to$ SYN-ACK $\to$ ACK; teardown FIN, ACK, FIN, ACK. Sequence numbers for order; ACK = next expected byte; timeout $\Rightarrow$ retransmit.
+\end{itemize}
+\end{recap}

@@ -1,0 +1,233 @@
+\chapter{Lecture 6 --- HTTPS and the TLS Handshake: Securing the Web}
+
+\begin{keyidea}[The one idea from this lecture]
+Plain HTTP sends everything as readable text, so anyone in the middle can read or change it. \textbf{HTTPS = HTTP + TLS}. TLS uses \textbf{cryptography} to give three things: \textbf{confidentiality} (no eavesdropping), \textbf{integrity} (no tampering) and \textbf{authentication} (verified identity). It uses \textbf{asymmetric} encryption to safely agree on a key, then fast \textbf{symmetric} encryption for the actual data. \textbf{Certificates} signed by trusted \textbf{CAs} prove the server is who it claims to be.
+\end{keyidea}
+
+\textbf{Roadmap:} HTTP over TLS (HTTPS) $\cdot$ Cryptography and its goals $\cdot$ Encryption types $\cdot$ TLS handshake flow $\cdot$ CAs and chain of trust $\cdot$ HTTPS in AWS.
+
+\section{Recap and the padlock question}
+In the HTTP/2 vs HTTP/3 stacks from Lecture 5, there is a ``security'' layer: \textbf{TLS} sits between HTTP and TCP (in HTTP/3 it is built into QUIC). Without it, data travels as \textbf{plain text}.
+
+\textbf{What does the padlock in the browser mean?}
+\begin{center}
+\begin{tabular}{lc}
+\toprule
+Claim & True? \\
+\midrule
+The website is \emph{safe} (not a scam) & \textcolor{cnred}{\ding{55}\ No} \\
+The connection is \emph{encrypted} & \textcolor{cngreen}{\checkmark\ Yes} \\
+The server's \emph{identity is verified} (it really owns that domain) & \textcolor{cngreen}{\checkmark\ Yes} \\
+\bottomrule
+\end{tabular}
+\end{center}
+A phishing site can have a padlock too! The padlock only says ``nobody can read this conversation, and you're talking to the real owner of \emph{this} domain''.
+
+\section{HTTP is plain text by design}
+\begin{itemize}
+  \item HTTP has \textbf{no built-in security}; it is vulnerable unless HTTPS is used.
+  \item Anyone who can \textbf{capture the traffic} (on public WiFi, at the ISP, \ldots) can read the full conversation between client and server --- passwords included.
+\end{itemize}
+
+\begin{center}
+\begin{tikzpicture}
+  \node[host] (c) at (0,0) {Client};
+  \node[srv] (s) at (8,0) {Server};
+  \draw[msg] (c) -- node[above,font=\ttfamily\small]{password=hunter2} (s);
+  \node[draw,fill=cnred!15,font=\small,align=center] (e) at (4,-1.4) {Eavesdropper\\can read it!};
+  \draw[dashed,cnred,->] (4,0) -- (e);
+\end{tikzpicture}
+\end{center}
+
+\section{HTTPS = HTTP + TLS}
+\begin{itemize}
+  \item \textbf{HTTPS} is the secure version of HTTP for safe communication over networks (port 443).
+  \item Historically it used \textbf{SSL} (Secure Sockets Layer).
+  \item Today it uses \textbf{TLS} (Transport Layer Security) to \textbf{encrypt data between client and server}.
+\end{itemize}
+\textbf{What does TLS actually provide?} \emph{Security, using cryptography.}
+
+\section{Cryptography}
+\textbf{Cryptography} is the practice of securing information by converting readable text (\textbf{plaintext}) into unreadable code (\textbf{ciphertext}) and back again.
+
+\begin{center}
+\begin{tikzpicture}
+  \node[draw,fill=white,minimum width=16mm,minimum height=9mm] (p1) at (0,0) {``Hello''};
+  \node[draw,fill=cnorange!25,minimum width=18mm,minimum height=9mm] (e) at (3,0) {Encrypt};
+  \node[draw,fill=gray!20,minimum width=16mm,minimum height=9mm,font=\ttfamily] (c) at (6,0) {jkmng};
+  \node[draw,fill=cngreen!25,minimum width=18mm,minimum height=9mm] (d) at (9,0) {Decrypt};
+  \node[draw,fill=white,minimum width=16mm,minimum height=9mm] (p2) at (12,0) {``Hello''};
+  \draw[arr] (p1) -- (e); \draw[arr] (e) -- (c); \draw[arr] (c) -- (d); \draw[arr] (d) -- (p2);
+  \node[font=\scriptsize] (k1) at (3,1.2) {encryption key}; \draw[arr] (k1) -- (e);
+  \node[font=\scriptsize] (k2) at (9,1.2) {decryption key}; \draw[arr] (k2) -- (d);
+  \node[font=\scriptsize,below=1mm of p1] {plaintext}; \node[font=\scriptsize,below=1mm of c] {ciphertext}; \node[font=\scriptsize,below=1mm of p2] {plaintext};
+\end{tikzpicture}
+\end{center}
+
+\subsection{Core goals of cryptography}
+\begin{center}
+\begin{tabularx}{\textwidth}{>{\bfseries}l X l}
+\toprule
+Goal & Meaning & Slogan \\
+\midrule
+Confidentiality (privacy) & Information is accessible \textbf{only to authorised parties}. & ``No eavesdropping'' \\
+Integrity & Data stays accurate and \textbf{hasn't been altered} in transit or storage. & ``No tampering'' \\
+Authentication & Verifies the \textbf{identities} of sender and receiver. & ``Verified identity'' \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\section{How do we achieve these goals? Encryption}
+
+\subsection{Symmetric encryption}
+\textbf{One shared secret key} is used both to encrypt and to decrypt.
+\begin{center}
+\begin{tikzpicture}
+  \node[draw,minimum width=14mm,minimum height=10mm,font=\small,align=center] (p) at (0,0) {Plain\\text};
+  \node[draw,circle,fill=cnorange!25,font=\small] (e) at (2.5,0) {E};
+  \node[draw,minimum width=14mm,minimum height=10mm,font=\ttfamily\scriptsize,fill=gray!15,align=center] (c) at (5,0) {A\#\$b\%\\9xQ!};
+  \node[draw,circle,fill=cngreen!25,font=\small] (d) at (7.5,0) {D};
+  \node[draw,minimum width=14mm,minimum height=10mm,font=\small,align=center] (p2) at (10,0) {Plain\\text};
+  \draw[arr] (p) -- (e); \draw[arr] (e) -- (c); \draw[arr] (c) -- (d); \draw[arr] (d) -- (p2);
+  \node[font=\small,cnblue] (k) at (5,1.6) {SAME secret key};
+  \draw[arr,cnblue] (k) -- (e); \draw[arr,cnblue] (k) -- (d);
+\end{tikzpicture}
+\end{center}
+\begin{itemize}
+  \item \textbf{Fast} --- great for encrypting lots of data.
+  \item \textbf{The issue:} \emph{how do we share the key securely?} If you send the key over the network, an eavesdropper can grab it. \textbf{Strangers (your browser and a website you've never visited) cannot securely share a key in advance.}
+\end{itemize}
+
+\subsection{Asymmetric (public-key) encryption}
+Each party has a \textbf{key pair}: a \textbf{public key} (shared with everyone) and a \textbf{private key} (kept secret). Data encrypted with the public key can \textbf{only} be decrypted with the matching private key.
+\begin{center}
+\begin{tikzpicture}
+  \node[host] (s) at (0,0) {Sender};
+  \node[draw,minimum width=14mm,minimum height=9mm,font=\small] (p) at (2.3,0) {Plaintext};
+  \node[draw,fill=gray!15,minimum width=14mm,minimum height=9mm,font=\small] (c) at (5.3,0) {Ciphered};
+  \node[draw,minimum width=14mm,minimum height=9mm,font=\small] (p2) at (8.3,0) {Plaintext};
+  \node[host] (r) at (10.6,0) {Recipient};
+  \draw[arr] (s) -- (p); \draw[arr] (p) -- node[above,font=\scriptsize]{encrypt} (c); \draw[arr] (c) -- node[above,font=\scriptsize]{decrypt} (p2); \draw[arr] (p2) -- (r);
+  \node[font=\scriptsize,cnblue,align=center] at (3.3,-1.1) {recipient's \textbf{public} key\\(anyone may have it)};
+  \node[font=\scriptsize,cnred,align=center] at (7.6,-1.1) {recipient's \textbf{private} key\\(only recipient has it)};
+\end{tikzpicture}
+\end{center}
+\begin{itemize}
+  \item Solves the key-sharing problem: you can publish your public key freely.
+  \item But it is \textbf{slow} --- too slow to encrypt a whole video stream.
+\end{itemize}
+
+\begin{keyidea}[Key insight of TLS: use BOTH]
+\textbf{Asymmetric} $\to$ to share a secret safely (only at the start). \\
+\textbf{Symmetric} $\to$ for fast communication (all the actual data). \\
+Why not only symmetric? Because strangers cannot securely share a key. Why not only asymmetric? Because it is slow.
+\end{keyidea}
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+ & Symmetric & Asymmetric \\
+\midrule
+Keys & 1 shared secret key & Public + private key pair \\
+Speed & Fast & Slow \\
+Problem & How to share the key? & Too slow for bulk data \\
+Used in TLS for & Encrypting the data (session key) & Safely exchanging the secret \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{How do I trust this server? Certificates}
+Look at these two domains: \texttt{micr\underline{o}s\underline{o}ft.com} vs \texttt{microsoft.com}. In the first one the underlined letters are actually Cyrillic ``o'' characters --- it looks identical but is a \textbf{different site}. Encryption alone is useless if you're encrypting your password \emph{to an attacker}. We need proof of identity: a \textbf{certificate}.
+
+\subsection{What is a certificate?}
+A \textbf{digital certificate} is like an ID card for a website. It contains:
+\begin{itemize}
+  \item the \textbf{domain name} it is issued to (Common Name, e.g.\ \texttt{*.canva.com}),
+  \item the server's \textbf{public key},
+  \item the \textbf{issuer} --- the \textbf{Certificate Authority (CA)} that vouches for it (e.g.\ Amazon RSA 2048 M04),
+  \item \textbf{validity dates} (e.g.\ expires on some date) and a serial number,
+  \item the CA's \textbf{digital signature}, proving the CA really issued it.
+\end{itemize}
+
+\subsection{CAs and the chain of trust}
+Your browser/OS ships with a list of trusted \textbf{root CAs}. A root CA signs an \textbf{intermediate CA}'s certificate, which signs the website's certificate. The browser checks each signature up the chain until it reaches a root it already trusts.
+\begin{center}
+\begin{tikzpicture}[c/.style={draw,rounded corners,minimum width=36mm,minimum height=9mm,align=center,font=\small}]
+  \node[c,fill=cngreen!25] (r) at (0,0) {Root CA\\\scriptsize(pre-installed in browser/OS)};
+  \node[c,fill=cnblue!15] (i) at (0,-1.6) {Intermediate CA\\\scriptsize(e.g.\ Amazon RSA 2048 M04)};
+  \node[c,fill=cnorange!20] (l) at (0,-3.2) {Website certificate\\\scriptsize(*.canva.com + public key)};
+  \draw[arr] (r) -- node[right,font=\scriptsize]{signs} (i);
+  \draw[arr] (i) -- node[right,font=\scriptsize]{signs} (l);
+  \draw[arr,dashed,cnred] (l.west) -- ++(-1.4,0) |- node[pos=0.25,left,font=\scriptsize,align=right]{browser verifies\\upward until it\\reaches a trusted root} (r.west);
+\end{tikzpicture}
+\end{center}
+
+\subsection{How HTTPS works (big picture)}
+\begin{center}
+\begin{tikzpicture}
+  \node[host,minimum width=20mm,minimum height=14mm] (c) at (0,0) {Client};
+  \node[srv,minimum width=22mm,minimum height=16mm] (s) at (8,0) {Server};
+  \draw[arr] ([yshift=3mm]c.east) -- node[above,font=\small]{SSL/TLS} ([yshift=3mm]s.west);
+  \draw[arr] ([yshift=-3mm]s.west) -- node[below,font=\small]{digital certificate (public key)} ([yshift=-3mm]c.east);
+  \node[below=1mm of c,font=\scriptsize] {gets server's public key};
+  \node[below=1mm of s,font=\scriptsize] {keeps private key};
+\end{tikzpicture}
+\end{center}
+Three phases: \textcircled{1} \textbf{server certificate check}, \textcircled{2} \textbf{key exchange}, \textcircled{3} \textbf{encrypted tunnel} for data.
+
+\section{The TLS handshake}
+TLS runs \textbf{after} the TCP 3-way handshake (Lecture 9) and \textbf{before} any HTTP data is sent.
+
+\begin{center}
+\begin{tikzpicture}[yscale=0.95]
+  \node[draw,fill=cnblue!20,font=\bfseries] at (0,0.5) {Client};
+  \node[draw,fill=cngreen!20,font=\bfseries] at (11.5,0.5) {Server};
+  \lifelines{0}{11.5}{0}{-8.2}
+  \draw[msg,gray] (0,-0.3) -- node[above,font=\scriptsize]{TCP: SYN / SYN-ACK / ACK (connection set up first)} (11.5,-0.6);
+  \draw[msg,cnblue] (0,-1.2) -- node[above,font=\small]{\textbf{1. ClientHello}: TLS versions, cipher suites, client random} (11.5,-1.7);
+  \draw[msg,cngreen!60!black] (11.5,-2.2) -- node[above,font=\small]{\textbf{2. ServerHello}: chosen cipher, server random} (0,-2.7);
+  \draw[msg,cngreen!60!black] (11.5,-3.0) -- node[above,font=\small]{+ \textbf{Certificate} (public key + CA signature)} (0,-3.5);
+  \node[draw,fill=cnorange!15,font=\scriptsize,align=left,anchor=east] at (-0.3,-3.9) {\textbf{3. Verify}\\certificate\\chain (CA)};
+  \draw[msg,cnpurple] (0,-4.6) -- node[above,font=\small]{\textbf{4. Key exchange} (pre-master secret, encrypted with server's public key)} (11.5,-5.1);
+  \node[font=\scriptsize,align=center] at (5.75,-5.75) {both sides derive the same \textbf{session key} from pre-master secret + client random + server random};
+  \draw[msg] (0,-6.3) -- node[above,font=\small]{Finished (encrypted)} (11.5,-6.6);
+  \draw[msg] (11.5,-6.9) -- node[above,font=\small]{Finished (encrypted)} (0,-7.2);
+  \draw[line width=3pt,cnred!60] (0,-7.8) -- node[above,font=\small\bfseries,text=cnred]{5. Encrypted application data (symmetric)} (11.5,-7.8);
+\end{tikzpicture}
+\end{center}
+
+\subsection*{Step 1 --- ClientHello}
+The client offers the \textbf{TLS versions} and \textbf{cipher suites} (bundles of algorithms) it supports, plus a \textbf{random nonce} (a 32-byte number used once).
+\begin{quote}\emph{``I can speak TLS 1.3 or TLS 1.2. I can use XYZ algorithm for PQR purposes. Here is a number-used-once, a 32-byte string.''}\end{quote}
+
+\subsection*{Step 2 --- ServerHello + Certificate}
+The server replies with the \textbf{cipher it picked} and its \textbf{certificate} (public key + CA signature).
+\begin{quote}\emph{``Out of your options, we will use this bundle of algorithms to encrypt our session, and this is my identity, issued by the following authority.''}\end{quote}
+
+\subsection*{Step 3 --- Authentication}
+The client \textbf{validates the certificate chain}: is it signed by a trusted CA, does the hostname match, is it unexpired / not revoked? If valid, the client can trust the server; if not, the browser shows ``\textbf{Your connection is not private / website is not secure}''. \textbf{This step stops man-in-the-middle attacks}, because an attacker cannot get a CA-signed certificate for someone else's domain.
+
+\subsection*{Step 4 --- Key exchange}
+Client and server \textbf{derive a shared session key}. (Classic way: the client makes a \emph{pre-master secret}, encrypts it with the server's public key; only the server's private key can decrypt it. Both sides then mix it with the two random numbers to get the same symmetric key. TLS 1.3 uses Diffie--Hellman, with the same result: a shared key no eavesdropper knows.)
+
+\subsection*{Step 5 --- Data sharing on a secure channel}
+Communication starts: all \textbf{application data is encrypted} with the symmetric session key --- an \textbf{encrypted tunnel}.
+
+\begin{examtip}
+Know the order: \textbf{ClientHello $\to$ ServerHello + Certificate $\to$ Certificate validation $\to$ Key exchange $\to$ Encrypted data.} And know \emph{why} each exists: Hello = agree on algorithms; Certificate = authentication; Key exchange (asymmetric) = safely agree a secret; Data (symmetric) = speed.
+\end{examtip}
+
+\section{Real-world deployment: HTTPS in AWS}
+\textbf{Lab objective:} add a certificate using \textbf{AWS Certificate Manager (ACM)}. ACM issues (free) TLS certificates for your domain and attaches them to AWS services such as load balancers or CloudFront, so your site is served over HTTPS. ACM also handles renewal.
+
+\begin{recap}
+\begin{itemize}
+  \item Padlock = encrypted + identity verified; NOT ``the site is safe''.
+  \item HTTP = plain text. HTTPS = HTTP + TLS (formerly SSL), port 443.
+  \item Cryptography: plaintext $\leftrightarrow$ ciphertext. Goals: Confidentiality, Integrity, Authentication.
+  \item Symmetric: 1 key, fast, key-sharing problem. Asymmetric: public/private pair, solves sharing, slow. TLS uses both.
+  \item Certificate = domain + public key + issuer CA + validity + CA signature. Chain of trust: root $\to$ intermediate $\to$ site.
+  \item Handshake: ClientHello $\to$ ServerHello+Cert $\to$ verify $\to$ key exchange $\to$ encrypted data.
+  \item AWS ACM provides certificates.
+\end{itemize}
+\end{recap}
